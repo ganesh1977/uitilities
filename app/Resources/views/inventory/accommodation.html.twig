@@ -1,0 +1,458 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bed Control{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	{{ datatable_css|raw }}
+  <style>
+  #beds {
+    font-size: 0.85em;
+  }
+  .tooltip-inner {
+  	min-width: 100px;
+  	max-width: 100%; 
+  }
+
+  @media (max-width: 320px) {
+  	.tooltip-inner {
+  		min-width: initial;
+  		max-width: 320px;
+  	}
+  }
+  </style>
+{% endblock %}
+
+{% block body %}
+  {% if search|length %}
+  
+    {% if search.hide_empty is defined %}
+      {% set hide_empty = 1 %}
+    {% else %}
+      {% set hide_empty = 0 %}
+    {% endif %}
+
+    {% if search.hide_shared is defined %}
+      {% set hide_shared = 1 %}
+    {% else %}
+      {% set hide_shared = 0 %}
+    {% endif %}
+
+  {% else %}
+  
+    {% set hide_empty = 1 %}
+    {% set hide_shared = 1 %}
+  
+  {% endif %}
+  
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>Bed control</h1>
+  		<p class="lead">Overview of accommodations for sale grouped by flight arrival days.
+        {% if flights is not empty %}
+          Guarantee rooms can be found by typing &quot;Guarantee&quot; in the search field.
+        {% endif %}
+      </p>
+  	</div>
+  
+    <hr>
+      {% if exception is defined %}
+          <div class="alert alert-danger" role="alert">
+              <strong>Error!</strong> <em>{{ exception.message }}</em></small>
+          </div>
+      {% endif %}
+  
+  	<form action="{{ path('inventory_accommodation')}}" method="GET">
+      <div class="row">
+        <div class="col-sm-4 col-md-2">
+          <div class="form-group">
+            <label for="brandSelect">Brand</label>
+            <select class="form-control" id="brandSelect" name="prom_cd">
+              <option value="bt,sr,lm,so,hf,st,uk">All brands</option>
+              <option value="bt" {% if search|length and search.prom_cd == 'bt' %}selected{% endif %}>Bravo Tours</option>
+              <option value="sr" {% if search|length and search.prom_cd == 'sr' %}selected{% endif %}>Solresor</option>
+              <option value="lm" {% if search|length and search.prom_cd == 'lm' %}selected{% endif %}>Matkavekka</option>
+              <option value="so" {% if search|length and search.prom_cd == 'so' %}selected{% endif %}>Solia</option>
+              <option value="hf" {% if search|length and search.prom_cd == 'hf' %}selected{% endif %}>Heimsferdir</option>
+              <option value="st" {% if search|length and search.prom_cd == 'st' %}selected{% endif %}>Sun Tours</option>
+              <option value="uk" {% if search|length and search.prom_cd == 'uk' %}selected{% endif %}>Primera Holidays UK</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-2">
+      	  <div class="form-group required">
+            <label for="inputAirport">Dest. Airport</label>
+            <input type="text" name="arr_cd" id="inputAirport" class="form-control" value="{% if search|length %}{{ search.arr_cd }}{% endif %}" style="text-transform:uppercase;" required>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-2">
+      	  <div class="form-group required">
+            <label for="inputStay">Stay</label>
+            <input type="text" title="Stay" name="stay" id="inputStay" class="form-control" value="{% if search|length %}{{ search.stay }}{% else %}7{% endif %}" required>
+          </div>
+        </div>
+        <div class="col-sm-8 col-md-4">
+      	  <div class="form-group required">
+            <label>Dates</label>
+            <div class="input-group input-daterange">
+                <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}" required>
+                <div class="input-group-addon">to</div>
+                <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="end_dt" value="{% if search|length %}{{ search.end_dt }}{% else %}{{ 'now'|date_modify('+14 days')|date('d-M-Y') }}{% endif %}" required>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-2">
+      	  <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-block btn-primary">Apply</button>
+          </div>
+        </div>
+      
+        <div class="col-sm-12 col-md-12">
+          <div class="form-check">
+            <label class="form-check-label">
+              <input class="form-check-input" type="checkbox" name="hide_empty" value="1"{% if hide_empty %} checked{% endif %}> Hide empty units
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="hide_shared" value="1"{% if hide_shared %} checked{% endif %}> Hide accommodations using shared inventory
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]"  {% if day.Mon is defined %} checked {% endif %} value="Mon" id="Mon"> MON 
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]" {% if day.Tue is defined %} checked {% endif %} value="Tue" id="Tue"> TUE
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]" {% if day.Wed is defined %} checked {% endif %} value="Wed" id="Wed"> WED
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]" {% if day.Thr is defined %} checked {% endif %} value="Thr" id="Thr"> THR
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]" {% if day.Fri is defined %} checked {% endif %} value="Fri" id="Fri"> FRI
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]" {% if day.Sat is defined %} checked {% endif %} value="Sat" id="Sat"> SAT
+            </label>
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]" {% if day.Sun is defined %} checked {% endif %} value="Sun" id="Sun"> SUN
+            </label>            
+            <label class="form-check-label ml-4">
+              <input class="form-check-input" type="checkbox" name="DAY[]" value="" {% if day.all is defined %} checked {% endif %} id="all"> ALL Days
+            </label>
+            
+          </div>
+        </div>
+      </div>
+
+  	</form>
+  
+    <hr>
+
+      
+      {% if mc_exception is not empty %}
+        <div class="alert alert-warning" role="alert">
+          <strong>Warning!</strong> We couldn't check ATCORE's memory cache and thus no check against <em>advanced search</em> is done.<br>
+          <small>{{ mc_exception.request }}: <em>{{ mc_exception.response }}</em></small>
+        </div>
+      {% endif %}
+
+  </div>
+
+  {% if flights is not empty %}
+      <table id="beds" class="table table-bordered table-sm" cellspacing="0" width="100%">
+          <thead>
+               <tr>
+                   <th>Hotel</th>
+                   <th>Room</th> 
+                  {% for date,seats_det in flightinfo %}                             
+                        {% set length = flightinfo[date]|length %}    
+                        {% if length == 5 and seats_det.seats is defined %}
+                          <th data-seats="{{ seats_det.seats }}" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                              title="<h6>Route: all/bkd/avl</h6>{{seats_det.routeCode }}<br>{{ seats_det.sell }}">{{ date|date('d-M') }} [{{date|date('l')|slice(0, 3) }}] ({{ seats_det.seats }})                                                                                                        
+                          </th>
+                          {% else %}
+                              {% set totalSeats = '0' %}
+                              {% set routeCode = '' %}
+                              {% set sell = '' %}
+                              {% for brand,brand_val in seats_det %}
+                                  {% set totalSeats = totalSeats + brand_val.seats %}
+                                  {% set routeCode = routeCode ~ brand_val.routeCode ~ '<br>' %}
+                                  {% set sell = sell ~ brand_val.sell ~ "<br>" %}
+                              {% endfor %} 
+                              <th data-seats="{{ totalSeats }}" data-toggle="tooltip" data-placement="bottom" data-html="true"
+                                        title="<h6>Route: all/bkd/avl</h6>{{ routeCode|trim('<br>') }}<br>{{ sell }}">{{ date|date('d-M') }} [{{date|date('l')|slice(0, 3) }}] ({{ totalSeats }})                                                                                                       
+                                    </th>
+                         {% endif %}
+                  {% endfor %}
+              </tr>                   
+          </thead>
+          <tbody>               
+          {% for prom,value in accommodations %}              
+          {% for accom_cd, accom in accommodations[prom] %}
+              {% if not accom.hide %}
+                  {% for rm_cd, rm in accom.rooms %}
+                      {% if not (hide_empty and rm.hide) %} 
+                          <tr>
+                              <td>{{ accom.name }} ({{ accom_cd }})</td>
+                              <td>{{ rm.name }} ({{ rm_cd }}{% if rm.guarantee %} 
+                                  <i class="fa fa-handshake-o" aria-hidden="true"></i><span style="display:none">Guarantee</span>{% endif %})
+                              </td>
+                              {% set cnt = 1 %}   
+                              {% set len = flightinfo|length %}
+                              {% for date in flights2[prom]|keys %}
+                                {% if cnt<=len %} 
+                                  {% if rm.flt_dates[date] is defined %}                                      
+                                      {% if rm.flt_dates[date].released or rm.flt_dates[date].stopsale %}
+                                          {% set units = 0 %}
+                                      {% else %}
+                                          {% set units = rm.flt_dates[date].bookable_units %}
+                                            {% if units == null %}
+                                                {% set units = 0 %}
+                                            {% endif %}
+                                      {% endif %}
+                                      <td data-sort="{{ units }}" id="{{ date|date('Ymd') }}{{ accom_cd }}{{ rm_cd }}"
+                                          {% if units > 0 and not rm.flt_dates[date].in_memory %}
+                                            class="table-danger" title="Accommodation not found in Advanced search"
+                                          {% endif %}>
+                                          {% set prm = prom|lower %}
+                                          <a href="{{ path('status', {
+                                              'st_dt': date,
+                                              'stay': search.stay,
+                                              'prom_cd': prm,
+                                              'dep_cd': '',
+                                              'accom_cd': accom_cd,
+                                              'rm_cd': rm_cd,
+                                              'n_adu': 2,
+                                              'n_chd': 0
+                                          }) }}">
+                                          {% if rm.flt_dates[date].stopsale %}
+                                                <span class="badge badge-pill badge-danger" data-toggle="tooltip"
+                                                      data-placement="bottom" data-html="true"
+                                                      title="<h6>Stopsale</h6>{{ rm.flt_dates[date].units }} units before stopsale was added.{% for note_id,status in rm.flt_dates[date].stopsale_notes %}<br>{{ stopsales_notes[note_id].st_dt }} to {{ stopsales_notes[note_id].end_dt }}{% endfor %}">
+                                            {% elseif rm.flt_dates[date].released %}
+                                                <span class="badge badge-pill badge-warning" data-toggle="tooltip"
+                                                      data-placement="bottom" data-html="true"
+                                                      title="<h6>Released</h6>{{ rm.flt_dates[date].units }} units before release was met.{% for inv_dt, rel_dt in rm.flt_dates[date].release_dates %}<br>{{ inv_dt|date('d-M-Y') }} released {{ rel_dt|date('d-M-Y') }}{% endfor %}">
+                                            {% elseif units > 0 %}
+                                                <span class="badge badge-pill badge-success" data-toggle="tooltip"
+                                                      data-placement="bottom" data-html="true"
+                                                      title="<h6>Available</h6>Release is {{ rm.flt_dates[date].earliest_release|date('d-M-Y') }}">
+                                            {% elseif units < 0 %}
+                                                <span class="badge badge-pill badge-danger"
+                                                      data-toggle="tooltip" data-placement="bottom"
+                                                      data-html="true"
+                                                      title="<h6>Error</h6>There is an error with Exclusive Start Dates!">
+                                          {% else %}
+                                                <span class="badge badge-pill badge-default">
+                                          {% endif %}
+                                              {% if units < 0 %}ERROR{% endif %}
+                                              {{ units }}
+                                              </span>
+                                          </a>
+                                      </td>
+                                      {% set cnt = cnt + 1 %}  
+                                       {% else %}
+                                      <td data-sort="0" class="table-danger"> 
+                                        <span class="badge badge-pill" data-toggle="tooltip" data-placement="bottom" data-html="true">0</span>
+                                      </td>
+                                  {% endif %}                                                                        
+                                {% endif %}
+                              {% endfor %}
+                          </tr>
+                      {% endif %}
+                  {% endfor %}
+                    
+              {% endif %}            
+          {% endfor %}
+          {% endfor %}			
+          </tbody>
+          <tfoot>
+          <tr style="font-style:italic;">
+              <th colspan="2">Total <input type="radio" name="sumType" value="all"> /
+                  Page <input type="radio" name="sumType" value="page"> /
+                  Search <input type="radio" name="sumType" value="search" checked="checked"></th>
+              {% for date in flightinfo|keys %}
+                  <th></th>
+              {% endfor %}
+          </tr>
+          <tr style="font-style:italic;" data-occ="2.1">
+              <td colspan="2">Rooms needed (Occ 2.10)</td>
+              {% for date in flightinfo|keys %}
+                  <td></td>
+              {% endfor %}
+          </tr>
+          <tr style="font-style:italic;" data-occ="2.25">
+              <td colspan="2">Rooms needed (Occ 2.25)</td>
+              {% for date in flightinfo|keys %}
+                  <td></td>
+              {% endfor %}
+          </tr>
+          <tr style="font-style:italic;" data-occ="2.5">
+              <td colspan="2">Rooms needed (Occ 2.50)</td>
+              {% for date in flightinfo|keys %}
+                  <td></td>
+              {% endfor %}
+          </tr>
+          <tr style="font-style:italic;" data-occ="2.75">
+              <td colspan="2">Rooms needed (Occ 2.75)</td>
+              {% for date in flightinfo|keys %}
+                  <td></td>
+              {% endfor %}
+          </tr>
+          <tr style="font-style:italic;" data-occ="3">
+              <td colspan="2">Rooms needed (Occ 3.00)</td>
+              {% for date in flightinfo|keys %}
+                  <td></td>
+              {% endfor %}
+          </tr>
+          </tfoot>
+      </table>
+
+    <div class="container-fluid">     
+      <div class="row">
+        <div class="col-sm-12 mt-3 mb-1">
+          <p class="text-danger"><small><em>Accommodations sharing allotment might result in totals not being correct!</em></small></p>
+          {% set search_local = search|merge({'excel':'download'}) %}
+          <a href="{{ path('inventory_accommodation', search_local) }}" class="btn btn-block btn-info">Download list as Excel</a>
+        </div>
+      </div>
+    </div>
+    <script type="text/javascript">var num_flights = {{ flightinfo|length }}</script>
+  {% endif %}
+
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+	{{ datatable_js|raw }}
+  
+	<script type="text/javascript">
+    jQuery.fn.dataTable.Api.register( 'sum()', function ( ) {
+        return this.flatten().reduce( function ( a, b ) {
+          b = $(b).text()
+          if ( typeof a === 'string' ) {
+            a = a.replace(/<(?:.|\n)*?>/gm, '').replace(/[^\d.-]/g, '') * 1;
+          }
+          if ( typeof b === 'string' ) {
+            b = b.replace(/<(?:.|\n)*?>/gm, '').replace(/[^\d.-]/g, '') * 1;
+          }
+          if (a < 0) {
+            a = 0;
+          }
+          if (b < 0) {
+            b = 0;
+          }
+          return a + b;
+        }, 0 );
+    } );
+
+		$(document).ready(function() {
+      var datepicker_options = {
+        format: 'dd-M-yyyy',
+        autoclose: true,
+        weekStart: 1
+      };
+      
+      $('#fromDateInput').datepicker(datepicker_options).on('changeDate', function (ev) {
+        $("#toDateInput").datepicker('setStartDate', ev.date);
+        if ($("#toDateInput").datepicker('getDate') < ev.date) {
+          $("#toDateInput").datepicker('setDate', ev.date);
+        }
+        $("#toDateInput").focus();
+      });
+      $('#toDateInput').datepicker(datepicker_options);
+      
+			var table = $('#beds').DataTable({
+				order: [
+          [ 0, 'asc' ],
+          [ 1, 'asc' ]
+        ],
+				pageLength: 25,
+        drawCallback: function() {
+          $('[data-toggle="tooltip"]').tooltip();
+          
+          var api = this.api();
+          var columns = [];
+          for (var i = 0; i < num_flights; i++) {
+            columns.push(i+2);
+          }
+          var option = {};
+          if ($('input[name=sumType]:checked').val() == 'page') {
+            option = {page: 'current'}
+          }
+          if ($('input[name=sumType]:checked').val() == 'search') {
+            option = {search: 'applied'}
+          }
+          $.each(columns, function( index, value ) {
+            $( api.column( value ).footer() ).html(api.column( value, option ).data().sum());
+          });
+          
+          $('#beds tfoot tr').each(function( trindex, trvalue ) {
+            if (trindex > 0) {
+              var occupancy = $(trvalue).data('occ');
+              $.each(columns, function( index, value ) {
+                var seats = $('#beds thead tr:eq(0) th:eq(' + (value) + ')').data('seats');  
+                var rooms = $(api.column( value ).footer()).text();
+                var rooms_needed = Math.ceil(seats / occupancy);
+                var rooms_bal = rooms - rooms_needed;
+                var plus = rooms_bal > 0 ? '+' : '';
+ 
+                $('#beds tfoot tr:eq(' + trindex + ') td:eq(' + (value - 1) + ')').html(rooms_needed + ' (' + plus + rooms_bal + ')');
+              });
+            }
+          });
+        },
+        stateSave: true
+			});
+      
+      $('#excludeList').on( 'keyup click', function () {
+        filterGlobal();
+      });
+      
+      $('input[name=sumType]').on('click', function() {
+        console.log('tryk');
+        table.draw();
+      });
+      
+      
+      $("#all").on("click", function () 
+            {                
+                $("#Mon").prop("checked", true);                                              
+                $("#Tue").prop("checked", true);
+                $("#Wed").prop("checked", true);
+                $("#Thr").prop("checked", true);
+                $("#Fri").prop("checked", true);
+                $("#Sat").prop("checked", true);
+                $("#Sun").prop("checked", true);
+            });
+
+            $("#all").on("click", function () {
+                if (!$(this).prop("checked")){                    
+                    $("#Mon").prop("checked", false);    
+                    $("#Tue").prop("checked", false);
+                    $("#Wed").prop("checked", false);
+                    $("#Thr").prop("checked", false);
+                    $("#Fri").prop("checked", false);
+                    $("#Sat").prop("checked", false);
+                    $("#Sun").prop("checked", false);
+                }
+            }); 
+            
+		});
+    
+    function filterGlobal () {
+      var searchWords = $('#excludeList').val();
+      if (searchWords.length > 2) {
+        $('#beds').DataTable().search(
+          '^((?!' + searchWords + ').)*$',
+          true,
+          false
+        ).draw();
+      } else {
+        $('#beds').DataTable().search('', false, true).draw()
+      }
+    }
+	</script>
+{% endblock %}

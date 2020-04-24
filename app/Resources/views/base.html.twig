@@ -1,0 +1,191 @@
+{% set datatable_css = '<link href="https://nightly.datatables.net/css/dataTables.bootstrap4.min.css" rel="stylesheet">' %}
+{% set datatable_js  = '<script src="https://nightly.datatables.net/js/jquery.dataTables.min.js"></script>
+                        <script src="https://nightly.datatables.net/js/dataTables.bootstrap4.min.js"></script>' %}
+{% set daterange_css = '' %}
+{% set daterange_js  = '<script type="text/javascript" src="//cdn.jsdelivr.net/momentjs/2.9.0/moment.min.js"></script>
+                        <script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="icon" href="{{ asset('assets/img/favicon.ico') }}">
+
+  <title>{% block title %}Utilities{% endblock %}</title>
+
+  {% block stylesheets %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/css/bootstrap-datepicker.standalone.min.css">
+    <link href="{{ asset('assets/css/custom.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/font-awesome.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('assets/css/select2.min.css') }}" rel="stylesheet">
+    
+    
+    {% if app.environment != 'prod' %}{% endif %}
+  {% endblock %}
+
+  {% block javascripts_header %}{% endblock %}
+  <style>
+      a :hover{color:lightblue; important;}
+      a {color:white;}
+      .dropdown-item .active{color:white;}
+      .navbar-toggleable-sm .navbar-nav .nav-link:hover{color:white important;}
+      .navbar-toggleable-sm .navbar-nav .nav-link{ color:white;}
+      .navbar-light .navbar-text{color:white;}
+      .navbar-light .navbar-nav .nav-link:focus, .navbar-light .navbar-nav .nav-link:hover{color:lightblue;}
+      .navbar-light .navbar-nav .active>.nav-link{color:white;}
+      .nav-link:hover{color:white;}
+      .navbar-light .navbar-nav .active>.nav-link:hover{color:white;}
+      
+      .navbar-text{color:white;}
+      .dropdown-item:focus, .dropdown-item:hover{    color: black;
+    text-decoration: none;
+    background-color: #306aaa;}
+      .dropdown-item.active, .dropdown-item:active{background-color:#306aaa;}
+     
+  </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-light fixed-top navbar-toggleable-sm" style=" height:auto; background-color: {% if app.environment != 'prod' %}#306aaa{% else %}#306aaa{% endif %}">
+  <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#collapsingMenu" aria-controls="collapsingMenu" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+ 
+ <a style="color:white;" class="navbar-brand" href="{{ path('homepage') }}">{% if app.environment != 'prod' %}{{ app.environment|upper }}<img  style="height: 60px;
+    margin-top: -79px;
+    margin-bottom: -66px;" src="{{ asset('assets/img/ptg-logo.png') }}" id="navbar-logo">{% else %}<img style="height: 60px;
+    margin-top: -79px;
+    margin-bottom: -66px;"  src="{{ asset('assets/img/ptg-logo.png') }}" id="navbar-logo">{% endif %}</a>
+
+  <div class="collapse navbar-collapse" id="collapsingMenu">
+     
+    {% if app.user %}
+        
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item dropdown
+              {% if app.request.attributes.get('_route') == 'inventory_flight'
+        or app.request.attributes.get('_route') == 'inventory_accommodation'
+        or app.request.attributes.get('_route') == 'inventory_flight_sellrules'
+        or app.request.attributes.get('_route') == 'status'
+        %}active{% endif %}">
+          <a class="nav-link dropdown-toggle" href="#" id="inventoryDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Inventory</a>
+          <div class="dropdown-menu" aria-labelledby="inventoryDropdown">
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'inventory_flight' %}active{% endif %}" href="{{ path('inventory_flight') }}">Flight Control</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'inventory_flight_sellrules' %}active{% endif %}" href="{{ path('inventory_flight_sellrules') }}">Flight Sell Rules</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'inventory_accommodation' %}active{% endif %}" href="{{ path('inventory_accommodation') }}">Bed Control</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'status' %}active{% endif %}" href="{{ path('status') }}">Status</a>
+          </div>
+        </li>
+        <li class="nav-item dropdown
+              {% if app.request.attributes.get('_route') == 'yield_flightsales'
+        or app.request.attributes.get('_route') == 'yield_packages'
+        or app.request.attributes.get('_route') == 'yield_routes'
+        or app.request.attributes.get('_route') == 'yield_offers'
+        or app.request.attributes.get('_route') == 'statistics'
+        or app.request.attributes.get('_route') == 'statistics_historic_sales'
+        %}active{% endif %}">
+          <a class="nav-link dropdown-toggle" href="#" id="yieldDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Yield</a>
+          <div class="dropdown-menu" aria-labelledby="yieldDropdown">
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'yield_flightsales' %}active{% endif %}" href="{{ path('yield_flightsales') }}">Flight sales</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'yield_packages' %}active{% endif %}" href="{{ path('yield_packages') }}">Price control</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'statistics' %}active{% endif %}" href="{{ path('statistics') }}">Reservations</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'statistics_historic_sales' %}active{% endif %}" href="{{ path('statistics_historic_sales') }}">Historic Sales</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'yield_offers' %}active{% endif %}" href="{{ path('yield_offers') }}">Special Offers</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'campaign' %}active{% endif %}" href="{{ path('campaign') }}">Campaigns</a>
+            <a class="dropdown-item {% if app.request.attributes.get('_route') == 'yield_transport' %}active{% endif %}" href="{{ path('yield_transport') }}">Transport PL</a>
+          </div>
+        </li>
+        <li class="nav-item dropdown
+              {% if app.request.attributes.get('_route') == 'jira_not_updated_by_atcore'
+        or app.request.attributes.get('_route') == 'avlabl_status'
+        or app.request.attributes.get('_route') == 'atcore_users'
+        or app.request.attributes.get('_route') == 'pub_users'
+
+or 
+ app.request.attributes.get('_route') == 'passenger_list'
+        %}active{% endif %}">
+          <a class="nav-link dropdown-toggle" href="#" id="primeraITDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">IT Dep</a>
+          <div class="dropdown-menu" aria-labelledby="primeraITDropdown">
+            <a class="dropdown-item" href="{{ path('jira_not_updated_by_atcore') }}">Updates needed (JIRA)</a>
+            <a class="dropdown-item" href="{{ path('avlabl_status') }}">AVLABL XML</a>
+            <a class="dropdown-item" href="{{ path('atcore_users') }}">ATCORE users</a>
+            <a class="dropdown-item" href="{{ path('pub_users') }}">Utils users</a>
+            <a class="dropdown-item" href="{{ path('passenger_list') }}">Passengers List</a>
+            
+           
+
+
+
+         <li class="nav-item dropdown
+              {% if app.request.attributes.get('_route') == 'report_list' %}active{% endif %}">
+					<a class="nav-link dropdown-toggle" href="#" id="ReportDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Reports</a>
+					
+					<div class="dropdown-menu" aria-labelledby="ReportDropdown">
+						<a class="dropdown-item" href="{{ path('report_list') }}">Gross Contribution Report</a>
+						<a class="dropdown-item" href="{{ path('index') }}">Service Category Lookup</a>
+						<!-- <a class="dropdown-item" href="{{ path('destination_index') }}">Destination Lookup </a> -->
+                                                <a class="dropdown-item" href="{{ path('airport_lookup_index') }}">Airport Lookup </a>
+						
+					</div>
+          </li>		
+      </ul>
+
+      <div class="pull-xs-right">
+        {% if is_granted('ROLE_ADMIN') %}
+        {% set currentRoute = app.request.attributes.get('_route') %}
+        <span class="pull-left">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item dropdown
+            {% if currentRoute == 'admin_ip'
+              or currentRoute == 'campaign_offers'
+              or currentRoute == 'campaign_admin'
+            %}active{% endif %}">
+                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin</a>
+                <div class="dropdown-menu" aria-labelledby="adminDropdown">
+                  <a class="dropdown-item {% if currentRoute == 'admin_ip' %}active{% endif %}" href="{{ path('admin_ip') }}">Manage IP addresses</a>
+                  <a class="dropdown-item {% if currentRoute == 'airport_index' %}active{% endif %}" href="{{ path('airport_index') }}">Manage airports</a>
+                  <a class="dropdown-item {% if currentRoute == 'campaign_admin' %}active{% endif %}" href="{{ path('campaign_admin') }}">Manage campaigns</a>
+                </div>
+            </li>
+          </ul>
+        </span>
+        {% endif %}
+        <span class="navbar-text"> {{ app.user.username }} (<a style="color:white;" href="{{ path('logout') }}">Log out</a>)</span>
+      </div>
+    {% endif %}
+  </div>
+</nav>
+
+<!-- Begin page content -->
+{% block body %}{% endblock %}
+<!-- End page content -->
+
+{% block javascripts_footer %}
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js" integrity="sha384-THPy051/pYDQGanwU6poAc/hOdQxjnOEXzbT+OuUAFqNqFjL+4IGLBgCJC3ZOShY" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="{{ asset('assets/js/jquery.min.js') }}"><\/script>')</script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.2.0/js/tether.min.js" integrity="sha384-Plbmg8JY28KFelvJVai01l8WyZzrYWG825m+cZ0eDDS1f7d/js6ikvy1+X+guPIB" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script>
+  <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+  <script src="{{ asset('assets/js/ie10-viewport-bug-workaround.js') }}"></script>
+  <script src="{{ asset('assets/js/select2.full.js') }}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.6.4/js/bootstrap-datepicker.min.js"></script>
+
+    <script>
+        $(document).ready(function()
+        {
+            var inputElements = document.getElementsByTagName('input');
+            for (var i=0; inputElements[i]; i++) {
+                if (inputElements[i].className && (inputElements[i].className.indexOf('disableAutoComplete') != -1)) {
+                    inputElements[i].setAttribute('autocomplete','off');
+                }
+            }
+        });
+    </script>
+{% endblock %}
+</body>
+</html>

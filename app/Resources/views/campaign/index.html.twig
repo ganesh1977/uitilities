@@ -1,0 +1,212 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Campaigns{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <nav class="breadcrumb">
+        <span class="breadcrumb-item active">Campaign Management</span>
+    </nav>
+
+    <div class="header">
+        <span class="pull-right">
+            <button data-toggle="modal" data-target="#editModal" data-id="" class="btn btn-sm btn-warning">
+                <i class="fa fa-3x fa-plus-circle" aria-hidden="true"></i>
+                <br />NEW CAMPAIGN
+            </button>
+        </span>
+
+        <h1>Campaigns</h1>
+        <p class="lead">Build and manage campaigns for our websites.</p>
+    </div>
+
+    <hr>
+
+    <form action="" method="get">
+        <div class="row">
+            <div class="col-sm-4 col-md-2">
+                <div class="form-group">
+                    <label>Brand</label>
+                    <select class="form-control" name="prom_cd">
+                        <option value="" {% if promotion == '' %}selected{% endif %}>All Brands</option>
+                        <option value="bt" {% if promotion == 'bt' %}selected{% endif %}>Bravo Tours</option>
+                        <option value="sr" {% if promotion == 'sr' %}selected{% endif %}>Solresor</option>
+                        <option value="lm" {% if promotion == 'lm' %}selected{% endif %}>Matkavekka</option>
+                        <option value="so" {% if promotion == 'so' %}selected{% endif %}>Solia</option>
+                        <option value="hf" {% if promotion == 'hf' %}selected{% endif %}>Heimsferdir</option>
+                        <option value="st" {% if promotion == 'st' %}selected{% endif %}>Sun Tours</option>
+                        {#<option value="uk" {% if promotion == 'uk' %}selected{% endif %}>Primera Holidays UK</option>#}
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-4 col-md-2">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn btn-block btn-primary">Apply</button>
+            </div>
+        </div>
+    </form>
+
+    <hr />
+
+    <table id="campaigns" class="table table-striped" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>Brand</th>
+                <th>Promotion Code</th>
+                <th>Code</th>
+                <th>Description</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Offers</th>
+                <th>Overrule sort</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for campaign in campaigns %}
+            <tr class="{% if (campaign.status == 1) %} table-success {% elseif (campaign.status == 2) %} table-warning {% else %} table-danger {% endif %}">
+                <td>
+                    <span style="display: none">{{ campaign.status }}</span>
+                    {% if (campaign.status == 1) %} Active {% elseif (campaign.status == 2) %} Pending {% else %} Ended {% endif %}
+                </td>
+                <td>{{ campaign.prom_cd }}</td>
+                <td>{% if campaign.promotion_cd %}{{ campaign.promotion_cd }}{% else %}&dash;{%endif %}</td>
+                <td>
+                    <a style="color:#306aaa;" href="{{ path('campaign_offers', {campaign_id: campaign.id}) }}">{{ campaign.cd }}</a>
+                </td>
+                <td>{{ campaign.description }}</td>
+                <td>{{ campaign.st_dt|date('d-M-Y') }}</td>
+                <td>{{ campaign.end_dt|date('d-M-Y') }}</td>
+                <td>
+                    <a style="color:#306aaa;" href="{{ path('campaign_offers', {campaign_id: campaign.id}) }}">{{ campaign.offers }}</a>
+                </td>
+                <td>{{ campaign.overrule_sort ? 'Yes' : 'No' }}</td>
+                <td>
+                    <a  style="color:white;" href="{{ path('campaign_offers', {campaign_id: campaign.id}) }}" class="btn btn-primary btn-sm">View all offers</a>
+                    <a style="color:#306aaa;" href="#" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal" data-id="{{ campaign.id }}">
+                        Edit campaign
+                    </a>
+                    <input type="button" data-campaign-id="{{ campaign.id }}" class="btn btn-danger btn-sm" name="delete_campaign_button" value="Delete campaign">
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+      <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Create campaign</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                <p>Modal body text goes here.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script src="{{ asset('assets/js/dataTables.plugin.js') }}"></script>
+    <script src="{{ asset('assets/js/add-campaign.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+    <script type="text/javascript">
+        var datepicker_options = {
+            format: 'dd-M-yyyy',
+            autoclose: true,
+            weekStart: 1,
+            showWeekDays: true
+        };
+
+        $(document).ready(function() {
+            var table = $('#campaigns').DataTable({});
+
+            table.on('draw', function()
+            {
+                $('input[name="delete_campaign_button"]').off().click(onDeleteCampaign);
+            });
+
+            $('#editModal').on('show.bs.modal', function (event) {
+                var btn = $(event.relatedTarget),
+                campaign_id = btn.data('id'),
+                modal = $(this);
+
+                modal.find('.modal-title').text('New campaign');
+                modal.find('.modal-body').html('<p align="center"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i></p>');
+                modal.find('.modal-body').load('{{ path("campaign_edit") }}?campaign_id=' + campaign_id, onModalLoad);
+
+                if (campaign_id != '') {
+                    modal.find('.modal-title').text('Edit campaign');
+                    return;
+                }
+            });
+
+            $('input[name="delete_campaign_button"]').click(onDeleteCampaign);
+        });
+
+        var onDeleteCampaign = function(event) {
+
+            var campaign_id = $(this).data('campaign-id');
+            var item = $(event.target);
+            var row =  item.closest('tr');
+            var campaignCode = row.find('td:eq(2)');
+            campaignCode = $(campaignCode).text();
+            campaignCode = campaignCode.replace(/^\s+|\s+$/g, "");
+
+            if (confirm("Are you sure to delete this campaign Code: " + campaignCode+ "?")) {
+                $.ajax({
+                    url: '/utils/dev/campaign/delete',
+                    data: JSON.stringify({campaign_id : campaign_id}),
+                    type: 'post',
+                    dataType: "json",
+                    success: function (res) {
+                        location.reload();
+                    },
+                    error: function(xhr, textStatus, error) {
+                        alert(xhr.responseJSON.error);
+                    }.bind(this)
+                });
+            }
+        };
+
+        var onModalLoad = function ()
+        {
+            campaign.init();
+        };
+
+    </script>
+    <style>
+
+        label.loading:after, button.loading:after {
+            content: '\f110';
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+            font: normal normal normal 14px/1 FontAwesome;
+            font-size: inherit;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-animation: fa-spin 2s infinite linear;
+            animation: fa-spin 2s infinite linear;
+            /*top: 35px;
+            left: 345px;*/
+        }
+
+    </style>
+{% endblock %}

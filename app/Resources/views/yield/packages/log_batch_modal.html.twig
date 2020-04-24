@@ -1,0 +1,27 @@
+<table id="log_batch" class="table table-sm table-striped" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Update</th>
+      <th>Changes</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for change in changes %}
+      <tr>
+        <td>{{ batch.user.username }}</td>
+        <td data-sort="{{ batch.updateDtTm.date|date('U') }}">{{ batch.updateDtTm.date|date('d-M-Y @ H:i') }}</td>
+        <td>
+          {{ change.getLPPFromKeyData }} / {{ change.getTransportHeadCdFromKeyData }} / {{ change.getStcStkCdFromKeyData }} / {{ change.rmCd }} / {{ change.getDateFromKeyData|date('d-M-Y') }} / {{ change.getStayFromKeyData }} nights
+          <a href="{{ path('yield_packages', {prom: change.getLPPFromKeyData, from: change.getDateFromKeyData|date('d-M-Y'), to: change.getDateFromKeyData|date('d-M-Y'), key_data: change.keyData, arr_pt: change.getArrPointFromKeyData, sstay: change.getStayFromKeyData, estay: change.getStayFromKeyData, stc_stk_cd: change.getStcStkCdFromKeyData, show_del:1}) }}"><i class="fa fa-arrow-circle-o-right" aria-hidden="true"></i></a>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script type="text/javascript">
+var table_batch = $('#log_batch').DataTable({
+  'order': [[ 2, 'asc' ]]
+});
+</script>

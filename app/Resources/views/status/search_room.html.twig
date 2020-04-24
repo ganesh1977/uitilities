@@ -1,0 +1,67 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Status search room{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+	
+    <h1>Status <small>alpha</small></h1>
+    <p class="lead">Use this tool to check for the usual suspects as to why an accommodation is not showing.</p>
+
+    <hr>
+
+    {% block search_form %}
+      {% include "status/formular.html.twig" %}
+    {% endblock %}
+  
+    {% if results is not empty %}
+    
+      <div class="mt-5">
+        <table id="search" class="table" cellspacing="0" width="100%">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Room</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for result in results %}
+              {% set local_search = search|merge({'rm_cd':result.RM_CD}) %}
+              <tr>
+                <td><a style="color:#306aaa;" href="{{ path('status', local_search) }}">{{ result.RM_CD }}</a></td>
+                <td>{{ result.RM }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  
+  </div>
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+
+	<script type="text/javascript">
+    $(document).ready(function() {
+      var datepicker_options = {
+        format: 'dd-M-yyyy',
+        autoclose: true,
+        weekStart: 1
+      };
+      
+      $('#arrivalDateInput').datepicker(datepicker_options);
+      
+			$('#search').DataTable({});
+      
+		});
+	</script>
+{% endblock %}

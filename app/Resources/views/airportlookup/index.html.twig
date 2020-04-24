@@ -1,0 +1,322 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Airport Lookup{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	{{ datatable_css|raw }}
+  <style type="text/css">
+      .emphasize{font-style: italic;}
+      .del_info { background-color: red; }   
+      
+      
+      /*.edit_info { background-color: #306aaa; }   */
+      .add_info { background-color: #306aaa; } 
+      /* The Modal (background) */
+    .modal {
+      display: none; /* Hidden by default */
+      position: fixed; /* Stay in place */
+      z-index: 1; /* Sit on top */
+      padding-top: 100px; /* Location of the box */
+      left: 0;
+      top: 0;
+      width: 100%; /* Full width */
+      height: 100%; /* Full height */
+      overflow: auto; /* Enable scroll if needed */
+      background-color: rgb(0,0,0); /* Fallback color */
+      background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    }
+
+    /* Modal Content */
+    .modal-content {
+      background-color: #fefefe;
+      margin: auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 32%;
+    }
+
+    /* The Close Button */
+    .close {
+      color: #aaaaaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close:hover,
+    .close:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    /* The Close Button */
+    .close_add {
+      color: #aaaaaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    .close_add:hover,
+    .close_add:focus {
+      color: #000;
+      text-decoration: none;
+      cursor: pointer;
+    }
+        
+    #error_message { color:green;font-size: 20px; }
+    .error_message { color:green;font-size: 20px; }
+    
+  </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+     <nav class="breadcrumb">
+            <span class="breadcrumb-item active">Airport Lookup</span>
+        </nav>
+  <div class="header">
+            <span class="pull-right">
+                <a href="#" id="add_info" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal" data-id="">
+                  <i class="fa fa-3x fa-plus-circle"></i>
+                  <br>NEW AIRPORT LOOKUP
+                </a>
+            </span>
+
+            <h1>Airport Lookup</h1>
+            <hr style="margin-top: 2rem;">
+</div>
+</div>    
+<table id="example" class="table table-striped table-bordered" cellspacing="0" width="100%" >
+	<thead>              
+        <tr>
+          <th>Airport Code</th>
+          <th>Cost pr. PAX</th>
+          <th>Handling Fee pr. PAX</th>
+          <th>Empty Leg Average</th>
+          <th>Empty Leg %</th>
+          <th>VAT</th>          
+          <th>Actions</th>            
+        </tr>
+	</thead>
+	<tbody>
+        {% for output_new in output %}
+        <tr>
+                <td>{{ output_new.airport_code }}</td>
+                <td>{{ output_new.cost_pax }}</td>
+                <td>{{ output_new.handling_fee }}</td>
+                <td>{{ output_new.empty_leg_average }}</td>
+                <td>{{ output_new.empty_leg_per }}</td>
+                <td>{{ output_new.get_vat }}</td>
+                <td>    
+                    <a href="#" id="{{ output_new.id }}" class="edit_info btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal" data-id="AAL">
+                                Edit
+                            </a>
+                    {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_SUPER_ADMIN') %}
+                    <button type="button" data-id="AAL" id="{{ output_new.id }}" class="delete_info btn btn-danger btn-sm" name="delete_airport_button">Delete</button>                                        
+                    {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+	</tbody>
+</table>
+        
+<div id="myModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>    
+    <table width="100%" border="0">
+        <tr>
+            <td colspan="2" align='left'><span id='error_message'></span></td>
+        </tr>
+        <tr>
+            <td colspan="2" align='left'><h5 class="modal-title" id="editModalLabel">Edit Airport Lookup</h5></td>
+        </tr>    
+        <tr>
+            <td colspan="2"><input type="hidden" name="id" id="RecId"></td>
+        </tr>    
+        <tr>
+          <td>Airport Code</td>
+          <td><input type="text" name="acode" id="acode" class='form-control' pattern="[A-Za-z]+" maxlength="3"></td>
+        </tr>    
+        <tr>
+          <td>Cost pr. PAX</td><td><input type="number" name="prPax" id="prPax" class='form-control'></td>
+        </tr>    
+        <tr>
+          <td>Handling Fee pr. PAX</td><td><input type="number" name="HFprPax" id="HFprPax" class='form-control'></td>
+         </tr>    
+         <tr>          
+          <td>Empty Leg Average</td><td><input type="number" name="ElAve" id="ElAve" class='form-control'></td>
+          </tr>    
+          <tr>
+          <td>Empty Leg %</td><td><input type="number" name="Elp" id="Elp" class='form-control'></td>
+          </tr>    
+          <tr>
+          <td>VAT</td><td><input type="number" name="vat" id="vat" class='form-control'></td>
+        </tr>
+        <tr>
+          <td colspan='2' align='center'><input type="submit" name="edit" id="edit" value='Edit' class="btn btn-primary pull-left"></td>
+        </tr>
+    </table>
+  </div>
+</div>  
+<div id="addModal" class="modal">
+  <div class="modal-content">
+    <span class="close_add">&times;</span>    
+    <table width="100%" border="0">
+        <tr>
+            <td colspan="2" align='left'><span class='error_message'></span></td>
+        </tr>
+        <tr>
+            <td colspan="2" align='left'><h5 class="modal-title" id="editModalLabel">New Airport Lookup</h5></td>
+        </tr>                
+        <tr>
+          <td>Airport Code</td><td><input type="text" name="acode" id="acode_add" class='form-control accode_add' pattern="[A-Za-z]+" maxlength="3"></td>
+        </tr>    
+        <tr>
+          <td>Cost pr. PAX</td><td><input type="number" name="prPax" id="prPax_add" class='form-control'></td>
+        </tr>    
+        <tr>
+          <td>Handling Fee pr. PAX</td><td><input type="number" name="HFprPax" id="HFprPax_add" class='form-control'></td>
+         </tr>    
+         <tr>          
+          <td>Empty Leg Average</td><td><input type="number" name="ElAve" id="ElAve_add" class='form-control'></td>
+          </tr>    
+          <tr>
+          <td>Empty Leg %</td><td><input type="number" name="Elp" id="Elp_add" class='form-control'></td>
+          </tr>    
+          <tr>
+          <td>VAT</td><td><input type="number" name="vat" id="vat_add" class='form-control'></td>
+        </tr>
+        <tr>
+          <td colspan='2' align='center'><input type="submit" name="Add" id="Add" value='Create' class="btn btn-primary pull-left"></td>
+        </tr>
+    </table>
+  </div>
+</div>        
+{% endblock %}
+
+{% block javascripts_footer %}
+  {{ parent() }}
+	{{ datatable_js|raw }}
+	<script type="text/javascript">
+            $(document).ready(function() {
+                       $(".delete_info").click(function()
+                       {
+                            var d_id = $(this).attr('id');     
+                            var make_conf = confirm("Are you sure you want to delete?");
+                            if(make_conf)
+                            {
+                            $.ajax({
+                                type:"POST",
+                                url: "{{ absolute_url(path('deletea')) }}",                                
+                                data: { "id":d_id} ,
+                                success: function(data) {                                                                        
+                                    window.location.reload();
+                                }
+                            });   
+                       }
+                    });
+                    
+                    $(".edit_info").click(function()
+                    {
+                        
+                        var e_id = $(this).attr('id');
+
+                            $.ajax({
+                                type:"POST",
+                                url: "{{ absolute_url(path('edita')) }}",                                
+                                data: { "id":e_id} ,
+                                success: function(data) {  
+                                    var modal = document.getElementById('myModal');
+                                    modal.style.display = "block";
+                                    $("#RecId").val(data['success']['id']);
+                                    $("#acode").val(data['success']['acode']);
+                                    $("#prPax").val(data['success']['cpx']);
+                                    $("#HFprPax").val(data['success']['HFP']);
+                                    $("#ElAve").val(data['success']['ELA']);
+                                    $("#Elp").val(data['success']['ELP']);
+                                    $("#vat").val(data['success']['gvat']);
+                                    var span = document.getElementsByClassName("close")[0];
+                                    span.onclick = function() {
+                                        modal.style.display = "none";
+                                      }                                
+                                }
+                             });
+                    });
+                    
+                    $("#edit").click(function()
+                    {
+                        var acode = $("#acode").val();
+                        var regex = new RegExp(/^[a-zA-Z\s]+$/);
+                        if(!regex.test(acode) || acode==''){  $("#acode").css('border','1px solid red'); return false }                        
+                        else {   $("#acode").css('border','1px solid #dedede'); }        
+                        
+                        var RecId = $("#RecId").val();
+                        
+                        var cprPax = $("#prPax").val();
+                        var HFprPax = $("#HFprPax").val();
+                        var ElAve = $("#ElAve").val();
+                        var Elp = $("#Elp").val();
+                        var vat = $("#vat").val();
+                        $.ajax({
+                                type:"POST",
+                                url: "{{ absolute_url(path('edit_submit')) }}",                                
+                                data: {'id':RecId,'acode':acode,'cprPax':cprPax,'HFprPax':HFprPax,'ElAve':ElAve,'Elp':Elp,'vat':vat},
+                                success: function(data) {        
+                                    //alert(data); return false;
+                                    if(data==1)
+                                    {
+                                        $("#error_message").show().html('Successfully Updated');
+                                        window.location.reload();                                                                        
+                                    }
+                                }
+                            });
+                    });
+            });            
+        
+            $(document).ready(function() {
+    $('#example').dataTable();
+    });
+    $("#add_info").click(function()
+    {
+        var modal = document.getElementById('addModal');
+        modal.style.display = "block";
+        var span = document.getElementsByClassName("close_add")[0];
+            span.onclick = function() {                
+                modal.style.display = "none";
+              } 
+    });
+    
+    $("#Add").click(function()
+    {        
+            var acodes   = $("#acode_add").val();
+            
+            var regex = new RegExp(/^[a-zA-Z\s]+$/);
+             
+            if(!regex.test(acodes) || acodes==''){  $("#acode_add").css('border','1px solid red'); return false }                        
+            else { $("#acode_add").css('border','1px solid #dedede'); }                                                
+
+            var cprPax  = $("#prPax_add").val();
+            var HFprPax = $("#HFprPax_add").val();
+            var ElAve   = $("#ElAve_add").val();
+            var Elp     = $("#Elp_add").val();
+            var vat     = $("#vat_add").val();            
+            
+            $.ajax({
+                    type:"POST",
+                    url: "{{ absolute_url(path('airport_add_new')) }}",
+                    data: {"acodes":acodes,"cprPaxES":cprPax,"HFprPax":HFprPax,"ElAve":ElAve,"Elp":Elp,"vat":vat},                    
+                    dataType: "json",
+                    success: function(data) {                        
+                        if(data==1)
+                        {
+                            $(".error_message").show().html('Successfully Inserted');
+                            window.location.reload();                                                                        
+                        }
+                    }
+                });
+        });
+        </script>        
+{% endblock %}

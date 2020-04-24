@@ -1,0 +1,148 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Reservations{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<link href="https://cdn.datatables.net/1.10.12/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.css" />
+  <style>
+  #reservations {font-size: 0.85em;}
+  .nw {white-space: nowrap;}
+  </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+	<div class="header">
+		<h1>Reservations</h1>
+		<p class="lead">Add your search parameters, click apply and browse the reservations made. You can use the table search to filter the results.</p>
+	</div>
+  
+  <!--form>
+    <div class="row">
+      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="form-group">
+          <label for="formGroupExampleInput">Example label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+        </div>
+        <div class="form-group">
+          <label for="formGroupExampleInput2">Another label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput2" placeholder="Another input">
+        </div>
+      </div>
+      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="form-group">
+          <label for="formGroupExampleInput">Example label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+        </div>
+        <div class="form-group">
+          <label for="formGroupExampleInput2">Another label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput2" placeholder="Another input">
+        </div>
+      </div>
+      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="form-group">
+          <label for="formGroupExampleInput">Example label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+        </div>
+        <div class="form-group">
+          <label for="formGroupExampleInput2">Another label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput2" placeholder="Another input">
+        </div>
+      </div>
+      <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="form-group">
+          <label for="formGroupExampleInput">Example label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput" placeholder="Example input">
+        </div>
+        <div class="form-group">
+          <label for="formGroupExampleInput2">Another label</label>
+          <input type="text" class="form-control" id="formGroupExampleInput2" placeholder="Another input">
+        </div>
+      </div>
+    </div>
+  </form-->
+
+	<table id="reservations" class="table table-sm table-striped" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Status</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Accommodation</th>
+        <th>Score</th>
+        <th>Adu</th>
+        <th>Chd</th>
+        <th>Inf</th>
+        <th>Origin</th>
+        <th>Profit</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for reservation in reservations %}
+        {% set profit = reservation.SELL_PRC - reservation.STK_COST %}
+        <tr>
+          <td class="nw">{{ reservation.RES_ID }} ({{ reservation.PROM_CD }})</td>
+          <td>{{ reservation.BKG_STS }}</td>
+          <td class="nw">{{ reservation.FIRST_ST_DT|date('Y-m-d') }}</td>
+          <td class="nw">{{ reservation.LAST_END_DT|date('Y-m-d') }}</td>
+          <td>{{ reservation.HOTEL_NAME }} ({{ reservation.HOTEL_CD }})</td>
+          <td>{% if stock_count[reservation.HOTEL_CD] is defined %}{{ (stock_count[reservation.HOTEL_CD] / stock_max * 100)|round }}{% endif %}</td>
+          <td>{{ reservation.N_ADU }}</td>
+          <td>{{ reservation.N_CHD }}</td>
+          <td>{{ reservation.N_INF }}</td>
+          <td data-sort="{{ reservation.ORIGIN_DT|date('U') }}" class="nw" title="{{ reservation.ORIGIN_DT }}">{{ reservation.ORIGIN_DT|date('d-M-y')|upper }}</td>
+          <td data-sort="{{ (profit / exchanges[reservation.PROM_CD|slice(0,2)])|round(2) }}" class="nw text-xs-right" title="{{ (profit / exchanges[reservation.PROM_CD|slice(0,2)])|round(2) }} EUR"><span class="profit">{{ profit|number_format }}</span> {{ reservation.CUR_CD }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th></th>
+        <th class="nw text-xs-right"></th>
+      </tr>
+    </tfoot>
+  </table>
+</div>  
+{% endblock %}
+
+{% block javascripts_footer %}
+{{ parent() }}
+  <script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+	<script src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap4.min.js"></script>
+	<script src="{{ asset('assets/js/jquery.number.min.js') }}"></script>
+	
+	<script type="text/javascript" src="//cdn.jsdelivr.net/bootstrap.daterangepicker/2/daterangepicker.js"></script>
+
+	<script type="text/javascript">
+  $(document).ready(function() {
+		var table = $('#reservations').DataTable({
+			pageLength: 25,
+      drawCallback: function() {
+        $('[data-toggle="tooltip"]').tooltip();
+        
+        var api = this.api();
+        
+        var profit = 0.0;
+        api.column( -1, {search: 'applied'} ).nodes().each(function(value, index) {
+          profit += $(value).data('sort');
+        });
+
+        $( api.column( -1 ).footer() ).html($.number(profit) + ' EUR');
+      },
+      
+		});
+	});
+	</script>
+{% endblock %}

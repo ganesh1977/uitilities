@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Users{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	{{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+    <nav class="breadcrumb">
+      <span class="breadcrumb-item active">User Management</span>
+    </nav>
+
+  	<h1>Users</h1>
+  	<p class="lead">Manage users that are auto created if e-mail address and password from Active Directory is correct.</p>
+
+  	<table id="users" class="table table-striped" cellspacing="0" width="100%">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Last activity</th>
+          <th>AtcomRes username</th>
+          <th>Active</th>
+          <th>External</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td>{{ user.username }}</td>
+            {% if user.lastLogin is not null %}<td data-sort="{{ user.lastLogin.date|date('U') }}">{{ user.lastLogin.date|date('d-M-Y @ H:i') }}</td>{% else %}<td data-sort="0">-</td>{% endif %}
+            <td>{% if user.atcomresUsername %}{{ user.atcomresUsername }}{% else %}-{% endif %}</td>
+            <td>{% if user.isActive %}Yes{% else %}No{% endif %}</td>
+            <td>{% if user.isExternal %}Yes{% else %}No{% endif %}</td>
+            <td><a href="{{ path('pub_user', {'id': user.id}) }}" class="btn btn-secondary btn-sm">Edit</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>    
+    </table>
+
+  </div>
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+	{{ datatable_js|raw }}
+  
+	<script type="text/javascript">
+		$(document).ready(function() {
+			var table = $('#users').DataTable({});
+		});
+	</script>
+{% endblock %}

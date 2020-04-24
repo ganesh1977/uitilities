@@ -1,0 +1,14 @@
+{% extends 'bootstrap_3_layout.html.twig' %}
+
+{%  block form_help %}
+    {%  for attrKey, attrValue in attr %}
+        {% if attrKey == 'data-help' %}
+            <small class="form-text text-muted">{{ attrValue|trans }}</small>
+        {% endif %}
+    {% endfor %}
+{% endblock %}
+
+{% block form_errors -%}
+    {{ parent() }}
+    {{- block('form_help') -}}
+{%- endblock form_errors %}

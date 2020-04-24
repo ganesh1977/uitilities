@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sell rules{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+{% endblock %}
+
+
+{% block body %}
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>Sell rules save not allowed</h1>
+      <a class="btn btn-secondary" href="{{ path('inventory_flight_sellrules', search) }}">Back to current search</a>
+      <a class="btn btn-secondary" href="{{ path('inventory_flight_sellrules') }}">Start a new search</a>
+  	</div>
+    
+    <hr>
+
+    <div class="alert alert-warning" role="alert">
+      <strong>Access not allowed:</strong> You don't have access rights to save sell rule changes. Please ask your manager to contact IT Support on <a href="mailto:support@primerait.com">support@primerait.com</a>.
+    </div>
+
+  </div>  
+{% endblock %}
+
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+{% endblock %}

@@ -1,0 +1,768 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sell rules{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style type="text/css">
+        .table-really-small td, .table-really-small th {
+            text-align: center;
+            padding: 8px 3px;
+            border: 1px solid #ccc;
+            font-size: 0.8em;
+        }
+        .tda {
+            background: green;
+        }
+        .tdb {
+            background: yellow;
+        }
+        .tdf {
+            background: red;
+        }
+        .allotment {
+            text-align: center;
+            padding: 2px;
+        }
+        .out {
+            background: #efefef;
+        }
+        .ret {
+            background: #dfdfdf;
+        }
+        .bt {
+            /*border-top: 2px solid #ccc!important;*/
+        }
+        .ret-error .ret input {
+            border-color: #d9534f;
+        }
+        .ret-error .ret.total {
+            color: #d9534f;
+        }
+        .matching-pair {
+            background-color: #5bc0de!important;
+        }
+        .value-changed {
+            color: #0275d8;
+            font-style: italic;
+            font-weight: bold;
+        }
+        .value-below-booked {
+            background: red;
+        }
+        .reverse-out-of-scope {
+            background: #fdf6ec!important;
+        }
+        .sold-out {
+            background: #edf7ed;
+        }
+        .not-matching {
+            /*border-color: #f0ad4e;*/
+            border-color: #d9534f;
+        }
+        .total-not-correct {
+            color: #d9534f;
+        }
+        tr.all td.out, tr.all td.ret, tr.all td.info {
+            border-bottom-color: transparent;
+            padding-bottom: 0px;
+        }
+        tr.bkd td {
+            font-size:0.7em;
+            padding-top: 0px;
+            color: #888;
+        }
+
+        /*    .hide-tr {
+              display:none;
+            }*/
+        tr.all span.total {
+            text-decoration: underline;
+        }
+    </style>
+{% endblock %}
+
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="header">
+            <h1>Sell rule overview</h1>
+            <p class="lead">
+                Check if outbound and homebound sell rules are matching and optimize our flights.
+            </p>
+        </div>
+
+        <hr>
+
+        {% if search|length %}
+            {% if search.hide_empty is defined %}
+                {% set hide_empty = 1 %}
+            {% else %}
+                {% set hide_empty = 0 %}
+            {% endif %}
+
+            {% if search.hide_off is defined %}
+                {% set hide_off = 1 %}
+            {% else %}
+                {% set hide_off = 0 %}
+            {% endif %}
+            {% if search.always_show is defined %}
+                {% set always_show = 1 %}
+            {% else %}
+                {% set always_show = 0 %}
+            {% endif %}
+        {% else %}
+            {% set hide_empty = 1 %}
+            {% set hide_off = 1 %}
+            {% set always_show = 1 %}
+        {% endif %}
+
+        <form action="{{ path('inventory_flight_sellrules')}}" method="GET">
+            <div class="row">
+                <div class="col-md-2 col-sm-4">
+                    <div class="form-group">
+                        <label>Departure &amp; Arrival</label>
+                        <div class="input-group">
+                            <input type="text" name="dep_cd" id="inputDepCd" class="form-control" value="{% if search|length %}{{ search.dep_cd }}{% endif %}" style="text-transform:uppercase;">
+                            <div class="input-group-addon">to</div>
+                            <input type="text" name="arr_cd" id="inputArrCd" class="form-control" value="{% if search|length %}{{ search.arr_cd }}{% endif %}" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-2 col-sm-4">
+                    <div class="form-group">
+                        <label for="inputHeadCd">Head Cd</label>
+                        <input type="text" name="head_cd" id="inputHeadCd" class="form-control" value="{% if search|length %}{{ search.head_cd }}{% endif %}" style="text-transform:uppercase;">
+                    </div>
+                </div>
+
+                <div class="col-md-4 col-sm-8">
+                    <div class="form-group">
+                        <label>Dates</label>
+                        <div class="input-group input-daterange">
+                            <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% endif %}">
+                            <div class="input-group-addon">to</div>
+                            <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="end_dt" value="{% if search|length %}{{ search.end_dt }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-2 col-sm-4">
+                    <div class="form-group">
+                        <label for="prcLvlSelect">Prc. level</label>
+                        <select class="form-control" id="prcLvlSelect" name="prc_lvl">
+                            <option value="" {% if search|length and search.prc_lvl == '' %}selected{% endif %}>Do not check</option>
+                            <option value="1" {% if search|length and search.prc_lvl == 1 %}selected{% endif %}>Bravo Tours &amp; Sun Tours</option>
+                            <option value="2" {% if search|length and search.prc_lvl == 2 %}selected{% endif %}>Solresor</option>
+                            <option value="3" {% if search|length and search.prc_lvl == 3 %}selected{% endif %}>Matkavekka</option>
+                            <option value="4" {% if search|length and search.prc_lvl == 4 %}selected{% endif %}>Solia</option>
+                            <option value="5" {% if search|length and search.prc_lvl == 5 %}selected{% endif %}>Heimsferdir</option>
+                            <option value="6" {% if search|length and search.prc_lvl == 6 %}selected{% endif %}>Primera Holidays UK</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-2 col-sm-4">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-block btn-primary">Apply</button><br>
+                        <button type="button" class="btn btn-block btn-primary1" id="log_infos">Log</button>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="checkbox" name="hide_empty" value="1"{% if hide_empty == 1 %} checked {% endif %} id="hide_empty"> Hide sell rules columns with no allotment on any dates.
+                        </label>
+                        <label class="form-check-label ml-2">
+                            <input class="form-check-input" type="checkbox" name="hide_off" value="1"{% if hide_off %} checked {% endif %} id="hide_off"> Hide sell rules set to status off.
+                        </label>
+                        <label class="form-check-label ml-2">
+                            <input class="form-check-input" type="checkbox" name="always_show" value="1"{% if always_show %} checked {% endif %} id="always_show"> Always show 'xxF0' even if empty.
+                        </label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <p class="mb-0"><small>Choose departure and arrival airports <em>or</em> transport header code (not both).</small></p>
+                </div>
+            </div>
+        </form>
+
+        <hr>
+        {% if flights|length %}
+
+            {% set directions = ['out','ret'] %}
+
+            <table id="sell-rules" class="table-really-small" cellspacing="0" width="100%">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Date</th>
+                        <th rowspan="2">Day</th>
+                        <th rowspan="2">Sale Sts.</th>
+                        <th rowspan="2">Ver.</th>
+                        <th rowspan="2">Sts.</th>
+                        <th colspan="{{ sell_rules.out|length + 1 }}" class="out">Outbound</th>
+                        <th colspan="{{ sell_rules.ret|length + 1 }}" class="ret">Homebound</th>
+                    </tr>
+                    <tr>
+                        {% for dir in directions %}
+                            {% for rule,sell_rule in sell_rules[dir] %}
+                                <th class="{{ dir }}">{{ rule }}</th>
+                                {% endfor %}
+                            <th class="{{ dir }}">TOTAL</th>
+                            {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for dt,trans_heads in flights %}
+                        {% for head_cd,flight in trans_heads %}
+
+                            <!-- Allotment -->
+                            <tr class="all" data-row-type="allotment" data-head-cd="{{ head_cd }}" data-cycle-dt="{{ dt|date('Y-m-d') }}">
+                                <td class="bt" rowspan="2">{{ dt|date('d-M-Y') }}</td>
+                                <td class="bt" rowspan="2">{{ dt|date('D') }}</td>
+                                <td class="bt" rowspan="2">{{ flight['out']['sale_sts'] }}</td>
+                                <td class="bt" rowspan="2">{{ head_cd[-1:] }}</td>
+
+                                <td class="bt info">All.</td>
+
+                                {% for dir in directions %}
+                                    {% set total = 0 %}
+                                    {% for rule, sell_rule in sell_rules[dir] %}
+                                        <td class="bt {{ dir }}" data-direction="{{ dir }}" data-rule="{{ rule }}">
+                                            {% if flight[dir].rules[rule] is defined %}
+                                                {% set total = total + flight[dir].rules[rule].alt %}
+                                                <input class="form-control form-control-sm allotment {% if flight[dir].rules[rule].alt == flight[dir].rules[rule].bkd %}sold-out{% endif %}" type="text" value="{{ flight[dir].rules[rule].alt }}" data-duration="{{ flight[dir].rules[rule].duration }}" data-restrictions='{{ flight[dir].rules[rule].rstn|json_encode|raw }}' data-allotment="{{ flight[dir].rules[rule].alt }}" data-booked="{{ flight[dir].rules[rule].bkd }}">
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td class="bt {{ dir }}" data-sec-id="{% if flight[dir] is defined %}{{ flight[dir].sec_id }}{% endif %}" data-direction="{{ dir }}">
+                                        {% if flight[dir] is defined %}
+                                            <span class="total {% if total != flight[dir].alt %}total-not-correct{% endif %}" title="{% if total != flight[dir].alt %}Sell rules accumulates to {{ total }}{% else %}Match{% endif %}" data-total="{{ flight[dir].alt }}" data-toggle="modal" data-target="#seatsModal">{{ flight[dir].alt }} <small>{% if total != flight[dir].alt %}({{ total - flight[dir].alt }}){% endif %}</small></span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+
+
+                            <!-- Booked -->
+                            <tr class="bkd" data-row-type="booked" data-head-cd="{{ head_cd }}" data-cycle-dt="{{ dt|date('Y-m-d') }}">
+                                <td class="info">Bkd.</td>
+                                {% for dir in directions %}
+                                    {% for rule, sell_rule in sell_rules[dir] %}
+                                        <td class="{{ dir }}" title="{{ rule }}" data-direction="{{ dir }}" data-rule="{{ rule }}">
+                                            {% if flight[dir].rules[rule] is defined %}
+                                                {{ flight[dir].rules[rule].bkd }}
+                                                {% if not flight[dir].rules[rule].prc_lvl_match %}
+                                                    <i class="fa fa-money {% if  flight[dir].rules[rule].alt > 0 %}text-danger{% endif %}" aria-hidden="true" title="Rate is missing for the selected price level"></i>
+                                                {% endif %}
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                    <td class="{{ dir }}" title="Total" data-direction="{{ dir }}">
+                                        {% if flight[dir] is defined %}
+                                            <span class="total">{{ flight[dir].bkd }}</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+
+                        {% endfor %}
+                    {% endfor %}
+
+                </tbody>
+            </table>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    {% if is_granted('ROLE_FLIGHT') %}
+                        <button class="btn btn-block btn-primary" data-toggle="modal" data-target="#previewModal">Save changes (with preview)</button>
+                    {% else %}
+                        <button class="btn btn-block btn-primary" disabled>Save changes (with preview)</button>
+                        <p class="text-center"><small>You don't have access rights to preview and save sell rule changes. Please ask your manager to contact IT Support on <a href="mailto:support@primerait.com">support@primerait.com</a>.</small></p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="previewModal" tabindex="-1" role="dialog" aria-labelledby="previewModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="previewModalLabel">Preview sell rule changes</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="saveForm" action="{{ path('inventory_flight_sellrules_save', search) }}" method="post">
+                                <input type="hidden" name="json" id="jsonString" value="">
+                                <div id="previewPlaceholder"></div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="saveToAtcomRes">Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Modal -->
+            <div class="modal fade" id="seatsModal" tabindex="-1" role="dialog" aria-labelledby="seatsModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="seatsModalLabel">Adjust seats</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="seatsForm" action="{{ path('inventory_flight_seats_save', search) }}" method="post">
+                                <div id="seatsPlaceholder"></div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" id="saveSeats" {% if not is_granted('ROLE_FLIGHT_ADMIN') %}disabled{% endif %}>Save changes</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    <script src="{{ asset('assets/js/moment.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+    <script type="text/javascript">
+        {% if search is defined and search|length %}
+        var stDt = moment.utc('{{ search.st_dt|date('Y-m-d') }}');
+        var endDt = moment.utc('{{ search.end_dt|date('Y-m-d') }}');
+
+        var jsonObj = {
+            depCd: '{{ search.dep_cd }}',
+            arrCd: '{{ search.arr_cd }}',
+            headCd: '{{ search.head_cd }}',
+            stDt: stDt.format('YYYY-MM-DD'),
+            endDt: endDt.format('YYYY-MM-DD'),
+            adjustments: []
+        };
+        {% endif %}
+
+        $(document).ready(function () {
+
+            var dt = '';
+            $("#fromDateInput").keyup(function () {
+                dt = $('#fromDateInput').val();
+            });
+            $("#toDateInput").keyup(function () {
+                dt = $('#toDateInput').val();
+            });
+
+            $('#fromDateInput').datepicker(datepicker_options);
+            $('#toDateInput').datepicker(datepicker_options);
+
+            $('#fromDateInput').blur(function ()
+            {
+                var id = '#fromDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $('#toDateInput').blur(function ()
+            {
+                var id = '#toDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+
+            $('#sell-rules td.out input.allotment').each(function (e) {
+                if ($(this).data('duration') > 0) {
+                    var $reverseInput = reverseInput($(this), 'each');
+                    if ($reverseInput) {
+//            var reverseCycleDt = moment.utc($reverseInput.closest('tr').data('cycle-dt'));
+//            if (reverseCycleDt.isBetween(stDt, endDt, null, '[]')) {
+                        if ($(this).val() != $reverseInput.val() && $(this).val() > 0 && $reverseInput.val() > 0) {
+                            $(this).addClass('not-matching');
+                            $reverseInput.addClass('not-matching');
+                        }
+//            } else {
+//              $(this).addClass('reverse-out-of-scope');
+//            }
+                    } else {
+                        $(this).addClass('reverse-out-of-scope');
+                    }
+                }
+            });
+
+            $('#sell-rules td.ret input.allotment').each(function () {
+                if ($(this).data('duration') > 0) {
+                    var $reverseInput = reverseInput($(this), 'each');
+                    if (!$reverseInput) {
+//          var reverseCycleDt = moment.utc($reverseInput.closest('tr').data('cycle-dt'));
+//          if (!reverseCycleDt.isBetween(stDt, endDt, null, '[]')) {
+                        $(this).addClass('reverse-out-of-scope');
+                    }
+                }
+            });
+
+
+
+            $('#sell-rules input.allotment').focusin(function () {
+                if ($(this).data('duration') > 0) {
+                    var $reverseInput = reverseInput($(this), 'in');
+                    if ($reverseInput) {
+                        $reverseInput.addClass('matching-pair');
+                    }
+
+                    /*
+                     var $tr_1 = $(this).closest('tr');
+                     var $tr_2 = $reverseInput.closest('tr');
+                     console.log($tr_1.attr('id') + ' / ' + $tr_2.attr('id'));
+                     $('#sell-rules tr').each(function(){
+                     if ($(this).attr('id') != $tr_1.attr('id') &&
+                     $(this).attr('id') != $tr_2.attr('id') &&
+                     $(this).attr('id') != $tr_1.attr('id') + '_bkd' &&
+                     $(this).attr('id') != $tr_2.attr('id') + '_bkd') {
+                     $(this).addClass('hide-tr');
+                     }
+                     });
+                     */
+                }
+            });
+
+            $('#sell-rules input.allotment').focusout(function () {
+                if ($(this).val() < $(this).data('booked')) {
+                    alert('You can\'t go below what is already booked!');
+                    $(this).addClass('value-below-booked');
+                } else {
+                    $(this).removeClass('value-below-booked');
+                }
+
+                if ($(this).val() == $(this).data('booked')) {
+                    $(this).addClass('sold-out');
+                } else {
+                    $(this).removeClass('sold-out');
+                }
+
+                var $reverseInput = reverseInput($(this), 'out');
+                if ($reverseInput) {
+                    $reverseInput.removeClass('matching-pair');
+                }
+
+                /*
+                 $('#sell-rules tr').each(function(){
+                 $(this).removeClass('hide-tr');
+                 });
+                 */
+
+            });
+
+            $('#sell-rules input.allotment').keyup(function () {
+                var $tr = $(this).closest('tr');
+                var $td = $(this).closest('td');
+
+                if ($(this).val() != $(this).data('allotment')) {
+                    $(this).addClass('value-changed');
+                } else {
+                    $(this).removeClass('value-changed');
+                }
+
+                if ($(this).data('duration') > 0 && !$(this).hasClass('reverse-out-of-scope')) {
+                    var $reverseInput = reverseInput($(this), 'change');
+                    if ($reverseInput) {
+                        if ($(this).val() != $reverseInput.val()) {
+                            $(this).addClass('not-matching');
+                            $reverseInput.addClass('not-matching');
+                        } else {
+                            $(this).removeClass('not-matching');
+                            $reverseInput.removeClass('not-matching');
+                        }
+                    }
+                }
+
+                var direction = $td.data('direction');
+                var $td_bkd = $('#sell-rules tr[data-row-type="booked"][data-head-cd="' + $tr.data('head-cd') + '"][data-cycle-dt="' + $tr.data('cycle-dt') + '"] td[data-direction="' + direction + '"][data-rule="' + $td.data('rule') + '"]');
+
+                if ($(this).val() > 0) {
+                    $td_bkd.find('i').addClass('text-danger');
+                } else {
+                    $td_bkd.find('i').removeClass('text-danger');
+                }
+
+                var total = 0;
+                $tr.find('td.' + direction + ' input.allotment').each(function () {
+                    total += parseInt($(this).val());
+                });
+
+                var $totalCol = $tr.find('td.' + direction + ' span.total');
+                if (parseInt($totalCol.data('total')) != total) {
+                    $totalCol.addClass('total-not-correct');
+                    $totalCol.attr('title', 'Sell rules accumulates to ' + total);
+                    $totalCol.find('small').html('(' + (total - $totalCol.data('total')) + ')');
+                } else {
+                    $totalCol.removeClass('total-not-correct');
+                    $totalCol.attr('title', 'Match');
+                    $totalCol.find('small').html('');
+                }
+
+            });
+
+
+            // Preview modal
+            //flight sell rule log preview.
+            $('#previewModal').on('show.bs.modal', function (event) {
+                var canSave = true;
+                jsonObj.adjustments = [];
+
+                var previewTable = $('<table class="table table-striped table-sm" cellspacing="0" width="100%" id="prevTable">');
+                previewTable.append('<thead><tr><th>Head Cd</th><th>Cycle Dt</th><th>Dir</th><th>Rule</th><th>Change</th><th style="display:none">hide_empty</th><th style="display:none">hide_off</th><th style="display:none">always_show</th><th style="display:none">prc_lvl</th></tr></thead>');
+
+                var tBody = $('<tbody>');
+
+                $('#sell-rules td input.allotment').each(function () {
+                    var error = false;
+
+                    var $td = $(this).closest('td');
+                    var $tr = $(this).closest('tr');
+
+                    var curAllotment = $(this).data('allotment');
+                    var newAllotment = $(this).val();
+                    var booked = $(this).data('booked');
+                    var change = newAllotment - curAllotment;
+
+                    var headCd = $tr.data('head-cd');
+                    var cycleDt = $tr.data('cycle-dt');
+                    var direction = $td.data('direction');
+                    //alert(direction);
+                    var rule = $td.data('rule');
+
+                    var hide_empty_info = $td.data('hide_empty');
+                    var hide_off_info = $td.data('hide_off');
+                    var always_show_info = $td.data('always_show');
+                    var prcVall = $td.data('prcLvlSelect');
+                    //var prcLvlSelect      = $td.dta('prcLvlSelect');
+
+                    //alert("aaaa:"+$( "#prcLvlSelect option:selected" ).val());
+                    //return false;
+
+                    var prcVal = $("#prcLvlSelect option:selected").val()
+
+                    var hide_empty = $('#hide_empty').is(":checked");
+                    var hide_empty_val = '';
+                    if (hide_empty == true)
+                    {
+                        hide_empty_val = '1';
+                    }
+                    var hide_off = $('#hide_off').is(":checked");
+                    var hide_off_val = '';
+                    if (hide_off == true)
+                    {
+                        hide_off_val = '1';
+                    }
+                    var always_show = $('#always_show').is(":checked");
+                    var always_show_val = '';
+                    if (always_show == true)
+                    {
+                        always_show_val = 1;
+                    }
+                    if (newAllotment < booked) {
+                        error = true;
+                        alert('You cannot save this as allotment is lower than booked on one of the sell rules!');
+                    }
+
+                    if (error) {
+                        canSave = false;
+                    }
+
+                    if (change != 0) {
+                        var row = '<tr>';
+                        row += '<td>' + headCd + '</td>';
+                        row += '<td>' + cycleDt + '</td>';
+                        row += '<td>' + direction + '</td>';
+                        row += '<td>' + rule + '</td>';
+                        row += '<td>' + (change > 0 ? '+' : '') + change + '</td>';
+                        row += '<td style="display:none">' + hide_empty_val + '</td>';
+                        row += '<td style="display:none">' + hide_off_val + '</td>';
+                        row += '<td style="display:none">' + always_show_val + '</td>';
+                        row += '<td style="display:none">' + prcVal + '</td>';
+                        row += '</tr>';
+                        tBody.append(row);
+
+                        var adjustment = {
+                            headCd: headCd,
+                            direction: direction,
+                            cycleDt: cycleDt,
+                            rule: rule,
+                            change: change,
+                            hide_empty: hide_empty_val,
+                            hide_off: hide_off_val,
+                            always_show: always_show_val,
+                            prcVal: prcVal
+                        };
+                        jsonObj.adjustments.push(adjustment);
+                    }
+                });
+                previewTable.append(tBody);
+
+                var modal = $(this);
+                modal.find('#previewPlaceholder').html(previewTable);
+            });
+
+            $('#saveToAtcomRes').click(function () {
+                var jsonString = JSON.stringify(jsonObj);
+                //alert(jsonString    ); return false;
+                $('#jsonString').val(jsonString);
+                $(this).prop('disabled', true);
+                $(this).html('Saving...');
+                $('#saveForm').submit();
+            });
+
+
+            // Seats modal
+            $('#seatsModal').on('show.bs.modal', function (event) {
+                var $closest_tr = $(event.relatedTarget).closest('tr');
+                var $closest_td = $(event.relatedTarget).closest('td');
+
+                var modal = $(this);
+                modal.find('.modal-title').text($closest_tr.data('head-cd') + ' (' + $closest_td.data('direction') + ') on ' + $closest_tr.data('cycle-dt'));
+                modal.find('#seatsPlaceholder').html('<p>Please wait while the information is fetched...</p>');
+                if ($closest_td.data('sec-id')) {
+                    modal.find('#seatsPlaceholder').load('{{ path("inventory_flight_seats_ajax") }}?sec_id=' + $closest_td.data('sec-id'));
+                } else {
+                    alert('No sector found for this flight!');
+                }
+            });
+
+            $('#saveSeats').click(function () {
+                var seats = Number($('#adjustSeats').val());
+                var sellRules = 0;
+                $('#adjustSellRules input.sell-rule').each(function () {
+                    sellRules += Number($(this).val());
+                });
+
+                if (seats != sellRules) {
+                    alert('Not a match in change of seats and distribution in sell rules.\nSeats changed: ' + seats + '\nSell rules changed: ' + sellRules);
+                } else {
+                    $(this).prop('disabled', true);
+                    $(this).html('Saving...');
+                    $('#seatsForm').submit();
+                }
+            });
+
+
+        });
+
+
+        function reverseInput($this, scope) {
+            var $tr = $this.closest('tr');
+            var $td = $this.closest('td');
+            var $input = $this;
+
+            var headCd = $tr.data('head-cd');
+            var cycleDt = moment.utc($tr.data('cycle-dt'));
+            var cycleDtString = cycleDt.format('YYYY-MM-DD');
+
+            var direction = $td.data('direction');
+            var rule = $td.data('rule');
+
+            var duration = $this.data('duration');
+
+            var reverseCycleDt = moment.utc($tr.data('cycle-dt'));
+            if (direction == 'out') {
+                reverseCycleDt.add(duration, 'days');
+                /*        if (scope == 'in' && reverseCycleDt.isAfter(endDt)) {
+                 $this.unbind('focusin');
+                 alert('Homebound flight (' + reverseCycleDt.format('DD-MMM-YYYY') + ') is not within your selected date range.');
+                 }*/
+            } else {
+                reverseCycleDt.subtract(duration, 'days');
+                /*        if (scope == 'in' && reverseCycleDt.isBefore(stDt)) {
+                 $this.unbind('focusin');
+                 alert('Outbound flight (' + reverseCycleDt.format('DD-MMM-YYYY') + ') is not within your selected date range.');
+                 }*/
+            }
+            var reverseCycleDtString = reverseCycleDt.format('YYYY-MM-DD');
+
+            var headCdRstns = [];
+            $.each($this.data('restrictions'), function (index, data) {
+                headCdRstns.push(data);
+            });
+
+            var lookup = '';
+            if (headCdRstns.length > 0) {
+                for (var i = 0; i < headCdRstns.length; i++) {
+                    if (i > 0) {
+                        lookup += ',';
+                    }
+                    lookup += '#sell-rules tr[data-row-type="allotment"][data-head-cd="' + headCdRstns[i] + '"][data-cycle-dt="' + reverseCycleDtString + '"]';
+                }
+            } else {
+                lookup += '#sell-rules tr[data-row-type="allotment"][data-cycle-dt="' + reverseCycleDtString + '"]';
+            }
+
+            var i_match = 0;
+            var match = 0;
+            var reverseInputs = [];
+
+            $(lookup).each(function () {
+                var $reverseTr = $(this);
+                var $reverseTd = $reverseTr.children('td[data-direction="' + reverseDir(direction) + '"][data-rule="' + rule + '"]');
+                if ($reverseTd.length) {
+                    var $reverseInput = $reverseTd.children('input.allotment');
+                    if ($reverseInput) {
+                        if ($reverseInput.val() == $input.val()) {
+                            match = i_match;
+                        }
+                        reverseInputs.push($reverseInput);
+                    }
+                    i_match++;
+                }
+            });
+
+            if (reverseInputs.length) {
+                return reverseInputs[match];
+            } else {
+                return null;
+            }
+        }
+
+        function reverseDir(dir) {
+            if (dir == 'out') {
+                return 'ret';
+            } else if (dir == 'ret') {
+                return 'out';
+            } else {
+                return null;
+            }
+        }
+        $(document).ready(function ()
+        {
+            var inputElements = document.getElementsByTagName('input');
+            for (var i = 0; inputElements[i]; i++) {
+                if (inputElements[i].className && (inputElements[i].className.indexOf('disableAutoComplete') != -1)) {
+                    inputElements[i].setAttribute('autocomplete', 'off');
+                }
+            }
+        });
+        $("#log_infos").click(function ()
+        {
+            var fdate = $("#fromDateInput").val();
+            var tdate = $("#toDateInput").val();
+            window.open("{{ path('flight_sell_log') }}?fdate=" + fdate + "&tdate=" + tdate);
+
+        });
+    </script>
+{% endblock %}

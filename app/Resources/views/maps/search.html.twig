@@ -1,0 +1,217 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Map search{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  <style>
+    .scrollspy {
+      position: relative;
+      height: 500px;
+      overflow-y: scroll;
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>Package Map Search</h1>
+  		<p class="lead">View available packages on our map.</p>
+  	</div>
+
+    {% block search_form %}
+      {% include "maps/formular.html.twig" %}
+    {% endblock %}
+  
+    <hr>
+  
+    {% if offers|length %}
+      <div class="row">
+        <div class="col-sm-6 col-md-7 col-lg-8">
+          {{ ivory_google_map(map) }}
+          {{ ivory_google_api([map]) }}
+        </div>
+        <div class="col-sm-6 col-md-5 col-lg-4">
+
+          <div data-spy="scroll" data-offset="0" class="scrollspy">
+
+            <!-- dates -->
+            {% set current_facet = facets.f_date %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Date</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  <li class="list-group-item justify-content-between">
+                    {{ facet_key|date('d-M-Y') }}
+                    <span class="text-muted"><small>{{ facet.price|number_format(0, '.') }}</small></span>
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+
+            <!-- stay -->
+            {% set current_facet = facets.f_stay %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Stay length</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  <li class="list-group-item justify-content-between">
+                    {{ facet_key }}
+                    <span class="text-muted"><small>{{ facet.price|number_format(0, '.') }}</small></span>
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+
+            <!-- rating -->
+            {% set current_facet = facets.f_rating %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Rating</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  {% set current_params = search|merge({'rating':facet_key}) %}
+                  <li class="list-group-item justify-content-between">
+                    <a href="{{ path('maps_search', current_params) }}">{{ facet_key }}</a>
+                    <span class="text-muted"><small>{{ facet.price|number_format(0, '.') }}</small></span>
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+
+            <!-- board -->
+            {% set current_facet = facets.f_board %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Board type</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  {% set current_params = search|merge({'board':facet_key}) %}
+                  <li class="list-group-item justify-content-between">
+                    <a href="{{ path('maps_search', current_params) }}">{{ facet_key }}</a>
+                    <span class="text-muted"><small>{{ facet.price|number_format(0, '.') }}</small></span>
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+
+            <!-- country -->
+            {% set current_facet = facets.f_cty1 %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Country</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  <li class="list-group-item justify-content-between">
+                    {{ facet_key }}
+                    <span class="text-muted"><small>{{ facet.price|number_format(0, '.') }}</small></span>
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+
+            <!-- Location -->
+            {% set current_facet = facets.f_cty2 %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Location</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  <li class="list-group-item justify-content-between">
+                    {{ facet_key }}
+                    <span class="text-muted"><small>{{ facet.price|number_format(0, '.') }}</small></span>
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+
+            <!-- Departure airport -->
+            {% set current_facet = facets.f_dep %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Departure</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  <li class="list-group-item justify-content-between">
+                    {{ facet_key }}
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+
+            <!-- Arrival airport -->
+            {% set current_facet = facets.f_arr %}
+            {% if current_facet|length > 1 %}
+              <ul class="list-group mb-2">
+                <li class="list-group-item bg-faded">
+                  <h5 class="mb-0">Arrival</h5>
+                </li>
+                {% for facet_key, facet in current_facet %}
+                  <li class="list-group-item justify-content-between">
+                     {{ facet_key }}
+                    <span class="badge badge-default badge-pill">{{ facet.count }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+
+          </div>
+          
+        </div>
+      </div>
+    {% endif %}
+    
+    <div class="row">
+      <div class="col-sm-12"><small><a href="{{ cache_link }}" target="_blank">{{ cache_link }}</a></small></div>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block javascripts_footer %}
+  {{ parent() }}
+
+	<script type="text/javascript">
+    $(document).ready(function() {
+      var datepicker_options = {
+        format: 'dd-M-yyyy',
+        autoclose: true,
+        weekStart: 1
+      };
+      
+      $('#fromDateInput').datepicker(datepicker_options).on('changeDate', function (ev) {
+        $("#toDateInput").datepicker('setStartDate', ev.date);
+        if ($("#toDateInput").datepicker('getDate') < ev.date) {
+          $("#toDateInput").datepicker('setDate', ev.date);
+        }
+        $("#toDateInput").focus();
+      });
+      $('#toDateInput').datepicker(datepicker_options);
+      
+		});
+	</script>
+{% endblock %}

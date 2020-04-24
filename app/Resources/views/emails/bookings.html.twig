@@ -1,0 +1,6 @@
+<h3>Bookings made within the last {{ minutes }} minutes!</h3>
+<ul>
+  {% for reservation in reservations %}
+    <li>Reservation {{ reservation.RES_ID }} for {{ reservation.N_PAX }} pax created {{ reservation.ORIGIN_DT|date('d-M-Y @ H:i') }} with booking status {% if reservation.BKG_STS == 'OPT' %}OPT <em>or</em> BKD{% else %}{{ reservation.BKG_STS }}{% endif %} and lead pax is {{ reservation.FORENAME }} {{ reservation.SURNAME }}.</li>
+  {% endfor %}
+</ul>

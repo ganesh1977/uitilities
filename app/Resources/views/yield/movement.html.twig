@@ -1,0 +1,321 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Flight sales the last 4 weeks{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  {{ datatable_css|raw }}
+  <style type="text/css">
+    .emphasize{font-style: italic;}
+    .actions > i {cursor: pointer;}
+    #flights {font-size: 0.85em;}
+    #resultsModal .modal-body table {font-size: 0.7em;}
+  </style>
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>Flight sales</h1>
+  		<p class="lead">Sales progress pr route the last four weeks. Cancellations are included, thus negative values can occur.</p>
+  	</div>
+  
+    <hr>
+  
+  	<form action="{{ path('yield_movement')}}" method="GET">
+      {% if search.offsale is defined %}
+        {% set offsale = 1 %}
+      {% else %}
+        {% set offsale = 0 %}
+      {% endif %}
+      <div class="row">
+        <div class="col-sm-6 col-md-2">
+          <div class="form-group required">
+            <label for="brandSelect">Brand</label>
+            <select class="form-control" id="brandSelect" name="prom_cd" required>
+              <option value="bt" {% if search|length and search.prom_cd == 'bt' %}selected{% endif %}>Bravo Tours</option>
+              <option value="sr" {% if search|length and search.prom_cd == 'sr' %}selected{% endif %}>Solresor</option>
+              <option value="lm" {% if search|length and search.prom_cd == 'lm' %}selected{% endif %}>Matkavekka</option>
+              <option value="so" {% if search|length and search.prom_cd == 'so' %}selected{% endif %}>Solia</option>
+              <option value="hf" {% if search|length and search.prom_cd == 'hf' %}selected{% endif %}>Heimsferdir</option>
+              <option value="st" {% if search|length and search.prom_cd == 'st' %}selected{% endif %}>Sun Tours</option>
+              <option value="uk" {% if search|length and search.prom_cd == 'uk' %}selected{% endif %}>Primera Holidays UK</option>
+              <option value="bt,sr,lm,so,hf,st,uk" {% if search|length and search.prom_cd == 'bt,sr,lm,so,hf,st,uk' %}selected{% endif %}>All brands</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-sm-6 col-md-2">
+      	  <div class="form-group required">
+            <label for="inputAirport">Arrival Airport</label>
+            <input type="text" name="arr_cd" id="inputAirport" class="form-control" value="{% if search|length %}{{ search.arr_cd }}{% endif %}" style="text-transform:uppercase;" required>
+          </div>
+        </div>
+        <div class="col-sm-8 col-md-4">
+      	  <div class="form-group required">
+            <label>Dates</label>
+            <div class="input-group input-daterange">
+                <input type="text" class="form-control" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}" required>
+                <div class="input-group-addon">to</div>
+                <input type="text" class="form-control" id="toDateInput" name="end_dt" value="{% if search|length %}{{ search.end_dt }}{% else %}{{ 'now'|date_modify('+14 days')|date('d-M-Y') }}{% endif %}" required>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-4">
+      	  <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-block btn-primary">Apply</button>
+          </div>
+        </div>
+        
+        <div class="col-sm-12 col-md-12">
+          <div class="form-check">
+            <label class="form-check-label">
+              <input class="form-check-input" type="checkbox" name="offsale" value="1"{% if offsale == 1 %} checked{% endif %}> Show off sale
+            </label>
+          </div>
+        </div>
+        
+      </div>
+  	</form>
+    
+  </div>
+  
+  {% if seats is not empty %}
+    <hr>
+    
+    <p id="loading"><i class="fa fa-spinner fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span></p>
+  
+  	<table id="flights" class="table table-sm table-striped movement" cellspacing="0" width="100%" style="display:none">
+      <thead>
+        <tr>
+          <th>To</th>
+          <th>Date</th>
+          <th>From</th>
+          <th>Seats</th>
+          <th>Free</th>
+          <th>Sold</th>
+          <th>Sold %</th>
+          <th style="border-left: 1px solid #000">W{{ week_no[0] }}</th>
+          <th>W{{ week_no[1] }}</th>
+          <th>W{{ week_no[2] }}</th>
+          <th style="border-right: 1px solid #000">W{{ week_no[3] }}</th>
+          <th>W{{ week_no[3] }}-{{ week_no[0] }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set promotions = search.prom_cd|upper|split(',') %}
+        {% for dest,dates in seats %}
+          {% for date,routes in dates %}
+            {% for route,info in routes %}
+              {% set show = 0 %}
+              {% set allotment = 0 %}
+              {% set booked = 0 %}
+              {% for promotion in promotions %}
+                {% if info[promotion] is defined %}
+                  {% set show = 1 %}
+                  {% set allotment = allotment + info[promotion].alt %}
+                  {% set booked = booked + info[promotion].bkd %}
+                {% endif %}
+              {% endfor %}
+              {% if show == 1 %}
+                {% set pax0 = info.WEEKS.PAX[week_no[0]] - info.WEEKS.PAX[week_no[1]] %}
+                {% set pax1 = info.WEEKS.PAX[week_no[1]] - info.WEEKS.PAX[week_no[2]] %}
+                {% set pax2 = info.WEEKS.PAX[week_no[2]] - info.WEEKS.PAX[week_no[3]] %}
+                {% set pax3 = info.WEEKS.PAX[week_no[3]] - info.WEEKS.PAX[week_no[4]] %}
+                {% set pax03 = info.WEEKS.PAX[week_no[0]] - info.WEEKS.PAX[week_no[4]] %}
+                {% set prc0 = info.WEEKS.PRC[week_no[0]] - info.WEEKS.PRC[week_no[1]] %}
+                {% set prc1 = info.WEEKS.PRC[week_no[1]] - info.WEEKS.PRC[week_no[2]] %}
+                {% set prc2 = info.WEEKS.PRC[week_no[2]] - info.WEEKS.PRC[week_no[3]] %}
+                {% set prc3 = info.WEEKS.PRC[week_no[3]] - info.WEEKS.PRC[week_no[4]] %}
+                {% set prc03 = info.WEEKS.PRC[week_no[0]] - info.WEEKS.PRC[week_no[4]] %}
+                {% if info.WEEKS.PAX[week_no[0]] != 0 %}
+                  {% set avgprc = info.WEEKS.PRC[week_no[0]] / info.WEEKS.PAX[week_no[0]] %}
+                {% else %}
+                  {% set avgprc = 0 %}
+                {% endif %}
+                <tr>
+                  <td data-filter="{{ route }}" data-order="{{ dest }}" data-toggle="tooltip" data-placement="right" data-html="true" title="{{ route }} ({{ info.FLT_NB }})" data-animation="false">{{ dest }}{% if info.STS == 'OFF' %} <span class="badge badge-pill badge-warning">OFF</span>{% endif %}</td>
+                  <td data-order="{{ date }}">{{ date|date('d-M-Y') }}</td>
+                  <td>{{ info.DEP }}</td>
+                  <td>{{ allotment }}
+                    {% if info.SECTOR.alt != info.TOTAL.alt %}
+                      <i class="fa fa-exclamation-circle" aria-hidden="true" data-toggle="tooltip" data-placement="top" data-html="true" title="Sell rules don't add up to the total allotment, the value shown here might not be correct! Total allotment: {{ info.SECTOR.alt }}, all sell rules total: {{ info.TOTAL.alt }}" data-animation="false"></i>
+                    {% endif %}
+                  </td>
+                  <td data-toggle="tooltip" data-placement="left" data-html="true" title="<h6>Rule split</h6>
+                    {% for rule,rule_data in info.RULES %}
+                      {% set rule_free = rule_data.alt - rule_data.bkd %}
+                      {% if rule_free > 0 %}
+                        {{ rule }}: {{ rule_free }}<br>
+                      {% endif %}
+                    {% endfor %}" data-animation="false"><strong>{{ allotment - booked }}</strong>
+                  </td>
+                  <td data-toggle="tooltip" data-placement="top" data-html="true" title="
+                    {% if avgprc != 0 %}
+                      {{ avgprc|number_format(0, '.') }}
+                    {% else %}
+                      -
+                    {% endif %}" data-animation="false">{{ booked }}
+                  </td>
+                  <td>{% if allotment > 0 %}{{ (booked / allotment * 100)|round(0) }}%{% endif %}</td>
+                  <td style="border-left: 1px solid #000" data-toggle="tooltip" data-placement="top" data-html="true" title="
+                    {% if pax0 != 0 and avgprc != 0 %}
+                      {{ (prc0 / pax0)|number_format(0, '.') }} ({{ ((prc0 / pax0 / avgprc * 100) - 100)|number_format(0) }}%)
+                    {% else %}
+                      -
+                    {% endif %}" data-animation="false">{{ pax0 }}
+                  </td>
+                  <td data-toggle="tooltip" data-placement="top" data-html="true" title="
+                    {% if pax1 != 0 and avgprc != 0 %}
+                      {{ (prc1 / pax1)|number_format(0, '.') }} ({{ ((prc1 / pax1 / avgprc * 100) - 100)|number_format(0) }}%)
+                    {% else %}
+                      -
+                    {% endif %}" data-animation="false">{{ pax1 }}
+                  </td>
+                  <td data-toggle="tooltip" data-placement="top" data-html="true" title="
+                    {% if pax2 != 0 and avgprc != 0 %}
+                      {{ (prc2 / pax2)|number_format(0, '.') }} ({{ ((prc2 / pax2 / avgprc * 100) - 100)|number_format(0) }}%)
+                    {% else %}
+                      -
+                    {% endif %}" data-animation="false">{{ pax2 }}
+                  </td>
+                  <td style="border-right: 1px solid #000" data-toggle="tooltip" data-placement="top" data-html="true" title="
+                    {% if pax3 != 0 and avgprc != 0 %}
+                      {{ (prc3 / pax3)|number_format(0, '.') }} ({{ ((prc3 / pax3 / avgprc * 100) - 100)|number_format(0) }}%)
+                    {% else %}
+                      -
+                    {% endif %}" data-animation="false">{{ pax3 }}
+                  </td>
+                  <td data-toggle="tooltip" data-placement="top" data-html="true" title="
+                    {% if pax03 != 0 and avgprc != 0 %}
+                      {{ (prc03 / pax03)|number_format(0, '.') }} ({{ ((prc03 / pax03 / avgprc * 100) - 100)|number_format(0) }}%)
+                    {% else %}
+                      -
+                    {% endif %}" data-animation="false">{{ info.WEEKS.PAX[week_no[0]] - info.WEEKS.PAX[week_no[4]] }}
+                  </td>
+                  <td class="actions"><i class="fa fa-search" aria-hidden="true" data-toggle="modal" data-target="#resultsModal" data-from="{{ info.DEP }}" data-to="{{ dest }}" data-date="{{ date|date('d-M-Y') }}" data-animation="false"></i></td>
+                </tr>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="font-style:italic;">
+          <td colspan="3">TOTAL / limit to this page <input type="checkbox" id="sumPage" value="1"></td>
+          <td></td>
+          <td style="font-weight:bold;"></td>
+          <td></td>
+          <td></td>
+          <td style="border-left: 1px solid #000"></td>
+          <td></td>
+          <td></td>
+          <td style="border-right: 1px solid #000"></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  {% endif %}
+  
+
+  <div class="modal" id="resultsModal" tabindex="-1" role="dialog" aria-labelledby="resultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resultsModalLabel">Results for two adults</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Loading data from cache...</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+
+	<script type="text/javascript">
+    jQuery.fn.dataTable.Api.register( 'sum()', function ( ) {
+        return this.flatten().reduce( function ( a, b ) {
+            if ( typeof a === 'string' ) {
+                a = a.replace(/<(?:.|\n)*?>/gm, '').replace(/[^\d.-]/g, '') * 1;
+            }
+            if ( typeof b === 'string' ) {
+                b = b.replace(/<(?:.|\n)*?>/gm, '').replace(/[^\d.-]/g, '') * 1;
+            }
+ 
+            return a + b;
+        }, 0 );
+    } );
+
+    $(document).ready(function() {
+      $('.movement').show();
+      $('#loading').hide();
+      
+      var datepicker_options = {
+        format: 'dd-M-yyyy',
+        autoclose: true,
+        weekStart: 1
+      };
+      
+      $('#fromDateInput').datepicker(datepicker_options).on('changeDate', function (ev) {
+        $("#toDateInput").datepicker('setStartDate', ev.date);
+        if ($("#toDateInput").datepicker('getDate') < ev.date) {
+          $("#toDateInput").datepicker('setDate', ev.date);
+        }
+        $("#toDateInput").focus();
+      });
+      $('#toDateInput').datepicker(datepicker_options);
+
+			var table = $('.movement').DataTable({
+				pageLength: 50,
+        drawCallback: function() {
+          $('[data-toggle="tooltip"]').tooltip();
+          
+          var api = this.api();
+          var columns = [3, 4, 5, 7, 8, 9, 10, 11];
+          var option = {};
+          if ($('#sumPage').is(':checked')) {
+            option = {page: 'current'}
+          }
+          $.each(columns, function( index, value ) {
+            $( api.column( value ).footer() ).html(api.column( value, option ).data().sum());
+          });
+          $( api.column( 6 ).footer() ).html(Math.round(api.column( 5, option ).data().sum() / api.column( 3, option ).data().sum() * 100) + '%');
+        },
+        columnDefs: [{
+          targets: 12,
+          orderable: false
+        }]
+			});
+      
+      $('#sumPage').on('click', function() {
+        table.draw();
+      });
+      
+      // Modal for results
+      $('#resultsModal').on('show.bs.modal', function (event) {
+        var icon = $(event.relatedTarget);
+        var from = icon.data('from');
+        var to = icon.data('to');
+        var date = icon.data('date');
+        // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+        // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+        var modal = $(this);
+        modal.find('.modal-body').html('<p>Please wait, searching advanced cached results!</p>');
+        modal.find('.modal-title').text('Search results '+ from + '-' + to + ' (' + date + ')');
+        modal.find('.modal-body').load('{{ path("yield_movement_modal") }}?from=' + from + '&to=' + to + '&date=' + date + '&prom_cd={% if search|length %}{{ search.prom_cd }}{% endif %}');
+      })
+		});
+	</script>
+{% endblock %}

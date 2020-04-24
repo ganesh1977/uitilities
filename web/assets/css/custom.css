@@ -1,0 +1,133 @@
+body {
+  padding-top: 5rem;
+}
+
+#navbar-logo {
+	display: inline;
+	height:30px;
+}
+
+table.dataTable td,
+table.dataTable th {
+  -webkit-box-sizing: content-box;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+/***************
+ * FORM SIGNIN *
+ ***************/
+.form-signin {
+  max-width: 330px;
+  padding: 15px;
+  margin: 0 auto;
+}
+.form-signin .form-signin-heading,
+.form-signin .checkbox {
+  margin-bottom: 10px;
+}
+.form-signin .checkbox {
+  font-weight: normal;
+}
+.form-signin .form-control {
+  position: relative;
+  height: auto;
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  padding: 10px;
+  font-size: 16px;
+}
+.form-signin .form-control:focus {
+  z-index: 2;
+}
+.form-signin input[type="text"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-signin input[type="email"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+table.dataTable.table-sm thead .sorting:before,
+table.dataTable.table-sm thead .sorting:after,
+table.dataTable.table-sm thead .sorting_asc:before,
+table.dataTable.table-sm thead .sorting_asc:after,
+table.dataTable.table-sm thead .sorting_desc:before,
+table.dataTable.table-sm thead .sorting_desc:after,
+table.dataTable.table-sm thead .sorting_asc_disabled:before,
+table.dataTable.table-sm thead .sorting_asc_disabled:after,
+table.dataTable.table-sm thead .sorting_desc_disabled:before,
+table.dataTable.table-sm thead .sorting_desc_disabled:after{
+    bottom: 0.3em;
+}
+
+
+/* simulate .input-group-btn:first-child > .btn in bootstrap.js */
+select:first-child + .bootstrap-select > .btn {
+    margin-right: -1px;
+}
+
+/* simulate .input-group .input-group-btn:first-child > .btn in bootstrap.js */
+.input-group select:first-child + .bootstrap-select > .btn {        
+    border-bottom-right-radius: 0;
+    border-top-right-radius:0;
+}
+
+.input-group > select + .bootstrap-select > .btn {
+    /* Fix the problem that the dropdown content doesn't show in IE and Firefox */
+    width: auto;
+}
+
+.input-group > .bootstrap-select {
+    /* Fix the problem that the dropdown will not resize to fit the dropdown content in IE */
+    /* Actually, it overwrites .bootstrap-select { width: 220px; } */
+    width: 1%;
+}
+
+.form-group.required label:after { 
+   content:'*';
+   color:red;
+}
+
+.datepicker.dropdown-menu { z-index: 1050; }
+
+
+.form-group-btn-item-pull-up {
+    margin-top: -55px;
+}
+
+button,
+.btn {
+    cursor: pointer !IMPORTANT;
+}
+
+.btn.btn-tertiary {
+    background: rgb(234, 233, 233);
+}
+.btn.btn-tertiary > i.fa {
+    margin-right: 3px;
+}
+
+.ie-warning {
+    display: none;
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .ie-warning {
+        display: block;
+    }
+}
+/*Sell rule log button allignment */
+#log_infos{ font-family: sans-serif !important;margin-left:0px; font-size: 1rem; border-color:1px solid #000 !important;  background-color: #f0ad4e !important; color: #000;}
+/*#log_infos{ font-family: sans-serif !important;margin-left:0px; font-size: 1rem; border-color:1px solid #000 !important;  background-color: #f0ad4e !important; color: #000;
+            float: right;margin-top: -92px;width: 195px;}*/
+.no_found { margin: 150px;} 
+.allign_test { margin-left: 5px;}

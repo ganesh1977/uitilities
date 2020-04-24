@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sell rules{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+{% endblock %}
+
+
+{% block body %}
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>Sell rules saved</h1>
+  		<p class="lead">Please check the response we got back from AtcomRes.</p>
+      <a class="btn btn-secondary" href="{{ path('inventory_flight_sellrules', search) }}">Back to current search</a>
+      <a class="btn btn-secondary" href="{{ path('inventory_flight_sellrules') }}">Start a new search</a>
+  	</div>
+    
+    <hr>
+
+    {% for response in responses.Response_Group.Response %}
+      {% set first_dt = requests[sequences[response.Control.Group_Seq]].cycle_dates|first %}
+      {% set header = requests[sequences[response.Control.Group_Seq]].dep_air_cd ~ ' to ' ~ requests[sequences[response.Control.Group_Seq]].arr_air_cd ~ ' on ' ~ first_dt.cycle_dt|date('d-M-Y') ~ ' (' ~ requests[sequences[response.Control.Group_Seq]].transport_cd ~ ')' %}
+      {% if response.Control.Error is null %}
+        <div class="alert alert-success" role="alert">
+          <strong>{{ header }}:</strong> Executed successfully.
+        </div>
+      {% else %}
+        <div class="alert alert-{% if response.Control.Error.Err_Type == 'ERR' %}danger{% else %}warning{% endif %}" role="alert">
+          <strong>{{ header }}:</strong> Not okay.<br>
+          {{ response.Control.Error.Err_Code }}: {{ response.Control.Error.Err_Text }}
+        </div>
+      {% endif %}
+    {% endfor %}
+
+  </div>  
+{% endblock %}
+
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+{% endblock %}

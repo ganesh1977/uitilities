@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Options{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+	
+    <h1>Options</h1>
+    <p class="lead">Reservations with booking status  set to 'option'.</p>
+  </div>
+
+	<table id="options" class="table table-striped" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+        <th>Res id</th>
+        <th>Created</th>
+        <th>Start</th>
+        <th>End</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+        <tr>
+          <td>{{ result.RES_ID }}</td>
+          <td>{{ result.ORIGIN_DT|date('d-M-Y') }}</td>
+          <td>{{ result.FIRST_ST_DT|date('d-M-Y') }}</td>
+          <td>{{ result.LAST_END_DT|date('d-M-Y') }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+  
+	<script type="text/javascript">
+    $(document).ready(function() {
+
+			$('#options').DataTable();
+
+    });
+  </script>
+  
+{% endblock %}

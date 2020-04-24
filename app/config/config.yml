@@ -1,0 +1,169 @@
+imports:
+    - { resource: parameters.yml }
+    - { resource: security.yml }
+    - { resource: services.yml }
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# http://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    locale: en
+
+    board_cd:
+        BB: breakfast
+        HB: half board
+        FB: Full board
+        "AI light": All Inclusive light
+        AI: All Inclusive
+        AI plus: All Inclusive plus
+
+framework:
+    #esi:             ~
+    #translator:      { fallbacks: ["%locale%"] }
+    secret:          "%secret%"
+    router:
+        resource: "%kernel.root_dir%/config/routing.yml"
+        strict_requirements: ~
+    form:            ~
+    csrf_protection: ~
+    validation:      { enable_annotations: true }
+    #serializer:      { enable_annotations: true }
+    templating:
+        engines: ['twig']
+        form:
+            resources:
+                - 'AppBundle:form'
+    default_locale:  "%locale%"
+    trusted_hosts:   ~
+    trusted_proxies: ~
+    session:
+        # http://symfony.com/doc/current/reference/configuration/framework.html#handler-id
+        handler_id:  session.handler.native_file
+        save_path:   "%kernel.root_dir%/../var/sessions/%kernel.environment%"
+    fragments:       ~
+    http_method_override: true
+    assets: ~
+
+# Twig Configuration
+twig:
+    debug:            "%kernel.debug%"
+    strict_variables: "%kernel.debug%"
+    form_themes:
+        - 'form/bootstrap_3_layout_helper.html.twig'
+
+# Doctrine Configuration
+doctrine:
+    dbal:
+        default_connection: local
+        connections:
+            atcore:
+                driver:      oci8
+                host:        "%database_host%"
+                port:        "%database_port%"
+                dbname:      "%database_name%"
+                user:        "%database_user%"
+                password:    "%database_password%"
+                servicename: "%database_servicename%"
+                service:     true
+                charset:     UTF8
+            local:
+                driver:   pdo_mysql
+                host:     '%database_host_local%'
+                port:     '%database_port_local%'
+                dbname:   '%database_name_local%'
+                user:     '%database_user_local%'
+                password: '%database_password_local%'
+                charset:  UTF8
+                mapping_types:
+                    enum: string
+        types:
+            mydate:  Primera\AtcomResBundle\Type\MyDateType
+    orm:
+        default_entity_manager: local
+        entity_managers:
+            atcore:
+                connection: atcore
+                mappings:
+                    PrimeraAtcomResBundle:  ~
+                dql:
+                    datetime_functions:
+                        day: DoctrineExtensions\Query\Oracle\Day
+                        month: DoctrineExtensions\Query\Oracle\Month
+                        year: DoctrineExtensions\Query\Oracle\Year
+                        to_char: DoctrineExtensions\Query\Oracle\ToChar
+                        trunc: DoctrineExtensions\Query\Oracle\Trunc
+
+                    string_functions:
+                        nvl: DoctrineExtensions\Query\Oracle\Nvl
+                        listagg: DoctrineExtensions\Query\Oracle\Listagg
+                        to_date: DoctrineExtensions\Query\Oracle\ToDate
+            local:
+                connection: local
+                mappings:
+                    AppBundle:  ~
+                    PrimeraUserBundle:  ~
+#        naming_strategy: doctrine.orm.naming_strategy.underscore
+#        auto_mapping: true
+        auto_generate_proxy_classes: "%kernel.debug%"
+
+# Swiftmailer Configuration
+swiftmailer:
+    transport:  smtp
+    host:       email-smtp.us-west-2.amazonaws.com
+    port:       587
+    encryption: tls
+    username:   "%mailer_user%"
+    password:   "%mailer_password%"
+
+
+ivory_google_map:
+    map:
+        debug: "%kernel.debug%"
+        api_key: AIzaSyCRUXgCrMddeURQGDHEe_5fSeYv3UyRT14
+    geocoder:
+        client: httplug.client.default
+        message_factory: httplug.message_factory.default
+        format: json
+        api_key: AIzaSyCRUXgCrMddeURQGDHEe_5fSeYv3UyRT14
+        
+httplug:
+    classes:
+        client: Http\Adapter\Guzzle6\Client
+        message_factory: Http\Message\MessageFactory\GuzzleMessageFactory
+    clients:
+        acme:
+            factory: httplug.factory.guzzle6
+
+primera_user:
+    hostnames:
+        - bravotours.dk
+        - solresor.se
+        - lomamatkat.fi
+        - matkavekka.fi
+        - solia.no
+        - heimsferdir.is
+        - suntours.dk
+        - primerait.com
+        - primeragroup.com
+        - primeraair.com
+        - air.local
+        - travel.local
+        - travelconordic.local
+        - travelconordic.com
+        - primeratravel.com
+    roles:
+        ROLE_USER: Normal user
+        ROLE_ADMIN: Admin user
+        ROLE_SUPER_ADMIN: Super admin user
+        ROLE_YIELD: Yield department
+        ROLE_FLIGHT: Flight department
+        ROLE_FLIGHT_ADMIN: Flight admin
+
+jms_serializer:
+    metadata:
+        directories:
+            main:
+                namespace_prefix: "Primera\\AtcomResBundle\\Entity\\WebService\\VRP"
+                path: "@PrimeraAtcomResBundle/Resources/config/serializer"
+            common:
+                namespace_prefix: "Primera\\AtcomResBundle\\Entity\\WebService\\VRP\\Common"
+                path: "@PrimeraAtcomResBundle/Resources/config/serializer/Common"

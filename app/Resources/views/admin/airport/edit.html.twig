@@ -1,0 +1,10 @@
+
+    {{ form_start(edit_form) }}
+        {{ form_widget(edit_form) }}
+            <button type="button" class="btn btn-primary pull-left" name="edit_airport">Edit</button>
+    {{ form_end(edit_form) }}
+
+    <div class="pull-right">
+        <button type="button" data-id="{{ airport.code }}" class="btn btn-danger" name="delete_airport" value="Delete">Delete</button>
+    </div>
+

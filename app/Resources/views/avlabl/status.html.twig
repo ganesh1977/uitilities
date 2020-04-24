@@ -1,0 +1,77 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}AVLABL XML status{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+	<div class="header">
+		<h1>AVLABL XML status</h1>
+		<p class="lead">Last modified and size of the AVLABL XML files sent from ATCORE to EPAM.</p>
+	</div>
+
+	<table id="avlabl" class="table table-striped" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+        <th>File</th>
+        <th>Last modified</th>
+        <th>Size</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for file in files %}
+        <tr>
+          <td>{{ file.name }}</td>
+          <td>{{ file.last_modified|date('r') }}</td>
+          <td>{{ (file.size / 1000000)|round(2) }} MB</td>
+          <td><button class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#backupModal" data-file="{{ file.name }}"><i class="fa fa-hdd-o" aria-hidden="true"></i> Restore</button></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="modal fade" id="backupModal" tabindex="-1" role="dialog" aria-labelledby="backupModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title" id="backupModalLabel">Files from backup</h4>
+      </div>
+      <div class="modal-body">
+        <p>Loading data from cache...</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  
+	<script type="text/javascript">
+    $(document).ready(function() {
+
+      // Modal for backup
+      $('#backupModal').on('show.bs.modal', function (event) {
+        var icon = $(event.relatedTarget);
+        var file = icon.data('file');
+        // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+        // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+        var modal = $(this);
+        modal.find('.modal-body').html('<p>Please wait, searching for backup files!</p>');
+        modal.find('.modal-title').text('Backup files for '+ file );
+        modal.find('.modal-body').load('{{ path("avlabl_backup_modal") }}?file=' + file );
+      });
+
+    });
+  </script>
+  
+{% endblock %}

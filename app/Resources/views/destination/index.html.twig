@@ -1,0 +1,137 @@
+{% extends "base.html.twig" %}
+{% block title %}Cost Lookup{% endblock %}
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+    <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css" />
+    <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css" />
+
+    <style type="text/css">
+        #pdf form {
+          display:none;
+        }
+        #results {
+        font-size: 0.85em;
+        }
+        .middle_icon {
+          top:50%;
+          position: absolute;
+          transform: translate(0, -50%)
+        }
+        .hide {
+        display: none;
+        }
+
+        .display_content {
+        display: block;
+        }
+        #grid_table{
+             height:350px !important; 
+        }
+        .jsgrid-pager-container a {color:blue !important;} 
+    </style>
+{% endblock %}
+
+{% block body %}
+   
+    <div>
+        <div class="container-fluid">
+            <div class="header">
+                <h2 class="page-header"> Destination Lookup</h2>
+            </div>
+
+        </div>
+        <div class="row">
+            {% for message in app.flashes('notice') %}
+             <div style=" margin-left:300px;background-color:grey;" class="btn btn-success">
+                 {{ message }}
+             </div>
+            {% endfor %}
+        </div>
+
+        <div     id="grid_table"></div>
+   </div>  
+           
+{% endblock %}
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js"></script>
+    <script type="text/javascript">
+    var cl={{ output|raw}};
+    $('#grid_table').jsGrid({
+         width: "100%",
+         height: "600px",
+
+         filtering: false,
+         inserting:true,
+         editing: true,
+         sorting: true,
+         paging: true,
+         autoload: true,
+         pageSize: 5,
+         pageButtonCount: 5,
+         deleteConfirm: "Do you really want to delete data?",
+         data: cl,
+         controller: {
+            //loadData: function(item){
+            //    return $.ajax({
+            //     type: "GET",
+            //     url: "/lookup/fetchdata",
+            //     data: cl,
+            //   }); 
+            //},
+            insertItem: function(item){
+                return $.ajax({
+                type: "POST",
+                url: "/utils/uat/destination/fetch",
+                data:item,
+                success: function(data) {
+				
+                           location.reload();
+                }
+            });
+           
+            },
+            updateItem: function(item){
+                return $.ajax({
+                type: "PUT",
+                url: "/utils/uat/destination/fetch",
+                data: item,
+                success: function(data) {
+                    location.reload();
+                }
+            });
+           
+            },
+            deleteItem: function(item){
+                return $.ajax({
+                type: "DELETE",
+                url: "/utils/uat/destination/fetch",
+                data: item,
+                success: function(data) {
+                    location.reload();
+                }
+           });
+           
+            },
+        },
+
+         fields: [
+            {name: "id",type: "hidden",css: 'hide'},
+            {name: "Destination_code", type: "text",width: 150, validate: "required"},
+            {name: "Resort",type: "text", width: 150,validate: "required"},
+			{name: "Airport_code",type: "text", width: 150,validate: "required"},
+			{name: "Autogen_val",type: "text", width: 150,validate: "required"},
+			{name: "Destination_cost",type: "text", width: 150,validate: "required"},
+			
+            //{name: "status", type: "checkbox", width: 40, title: "Status", sorting: false },
+            {type: "control"}
+        ]
+
+    });
+      
+    </script>
+{% endblock %}

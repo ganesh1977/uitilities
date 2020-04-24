@@ -1,0 +1,191 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historic Sales{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+    <style>
+        #historic_sales {
+            font-size: 0.85em;
+        }
+        .border-left {
+            /*      border-left: 1px solid #eceeef;*/
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="header">
+            <h1>Historic Sales</h1>
+            <p class="lead">See what the average adult accommodation prices were for bookings grouped by arrival date and booking time.</p>
+        </div>
+
+        <form action="{{ path('statistics_historic_sales') }}" method="GET">
+            <div class="row">
+                <div class="col-2">
+                    <div class="form-group">
+                        <label for="brandSelect">Brand</label>
+                        <select class="form-control" id="brandSelect" name="prom_cd">
+                            <option value="bt" {% if search|length and search.prom_cd == 'bt' %}selected{% endif %}>Bravo Tours</option>
+                            <option value="sr" {% if search|length and search.prom_cd == 'sr' %}selected{% endif %}>Solresor</option>
+                            <option value="lm" {% if search|length and search.prom_cd == 'lm' %}selected{% endif %}>Matkavekka</option>
+                            <option value="so" {% if search|length and search.prom_cd == 'so' %}selected{% endif %}>Solia</option>
+                            <option value="hf" {% if search|length and search.prom_cd == 'hf' %}selected{% endif %}>Heimsferdir</option>
+                            <option value="st" {% if search|length and search.prom_cd == 'st' %}selected{% endif %}>Sun Tours</option>
+                            <option value="uk" {% if search|length and search.prom_cd == 'uk' %}selected{% endif %}>Primera Holidays UK</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="form-group">
+                        <label>Arrive</label>
+                        <div class="input-group input-daterange">
+                            <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}">
+                            <div class="input-group-addon">to</div>
+                            <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="end_dt" value="{% if search|length %}{{ search.end_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-1">
+                    <div class="form-group">
+                        <label for="granSelect">Gran.</label>
+                        <select class="form-control" id="granSelect" name="granularity">
+                            <option value="mm" {% if search|length and search.granularity == 'mm' %}selected{% endif %}>Month</option>
+                            <option value="dd" {% if search|length and search.granularity == 'dd' %}selected{% endif %}>Day</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <div class="form-group">
+                        <label for="geographyInput">Geography <i class="fa fa-question-circle-o" aria-hidden="true" data-toggle="tooltip" data-placement="top" data-html="true" title="Use either country, location or resort code"></i></label>
+                        <input type="text" class="form-control" id="geographyInput" name="geography" value="{% if search|length and search.geography is defined %}{{ search.geography }}{% endif %}" style="text-transform:uppercase;">
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="form-group">
+                        <label for="accomInput">Accomm. / Room</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="accomInput" name="accom_cd" value="{% if search|length %}{{ search.accom_cd }}{% endif %}" style="text-transform:uppercase;">
+                            <span class="input-group-addon">/</span>
+                            <input type="text" class="form-control" id="geographyInput" name="rm_cd" value="{% if search|length %}{{ search.rm_cd }}{% endif %}" style="text-transform:uppercase;">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-1">
+                    <div class="form-group">
+                        <label for="stayInput">Stay</label>
+                        <input type="text" class="form-control" id="stayInput" name="stay" value="{% if search|length %}{{ search.stay }}{% endif %}">
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">View historic sales</button>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+
+        <hr>
+    </div>
+
+    {% if reservations is not empty %}
+        <table id="historic_sales" class="table table-sm table-bordered" cellspacing="0" width="100%">
+            <thead>
+            <tr>
+                <th>Arrive</th>
+                <th>Stay</th>
+                {% for bkg_dt in booking_dates %}
+                    <th class="border-left">{{ bkg_dt|date('M-y') }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for st_dt, stays in reservations %}
+                {% for stay, bookings in stays %}
+                    <tr>
+                        <td class="align-middle text-center" data-sort="{{ st_dt|date('Ymd') }}">{% if search.granularity == 'dd' %}{{ st_dt|date('d-M-y') }}{% else %}{{ st_dt|date('M-y') }}{% endif %}</td>
+                        <td class="align-middle text-center">{{ stay }}</td>
+                        {% for bkg_dt in booking_dates %}
+                            <td class="align-middle text-center border-left">
+                                {% if bookings[bkg_dt] is defined %}
+                                    {{ (bookings[bkg_dt].stk_avg + bookings[bkg_dt].ysup_avg + bookings[bkg_dt].tdis_avg)|number_format }}<br>
+                                    <small>
+                                        <span class="{% if bookings[bkg_dt].ysup_avg < 0 %}text-danger{% elseif bookings[bkg_dt].ysup_avg > 0 %}text-success{% endif %}">{{ bookings[bkg_dt].ysup_avg|number_format }}</span>
+                                        /
+                                        <span class="{% if bookings[bkg_dt].tdis_avg < 0 %}text-danger{% elseif bookings[bkg_dt].tdis_avg > 0 %}text-success{% endif %}">{{ bookings[bkg_dt].tdis_avg|number_format }}</span>
+                                        /
+                                        {{ bookings[bkg_dt].stk_avg|number_format }}
+                                        /
+                                        {{ bookings[bkg_dt].stk_count }}
+                                    </small>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="container-fluid">
+            <h5 class="mt-3">How to read the data?</h5>
+            <p>The main price in the data cell is the unit load price after yield and tactical discount are applied. Bottom line: <em>yield adjustment</em> / <em>tactical discount</em> / <em>load price for unit</em> / <em>adult pax</em> (please note: over and under occupancy supplements are not included).</p>
+        </div>
+    {% endif %}
+
+{% endblock %}
+
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+
+            var table = $('#historic_sales').DataTable({
+                pageLength: 25,
+                drawCallback: function() {
+                    $('[data-toggle="tooltip"]').tooltip();
+                }
+            });
+
+            var dt = '';
+            $("#fromDateInput").keyup(function () {
+                dt = $('#fromDateInput').val();
+            });
+            $("#toDateInput").keyup(function () {
+                dt = $('#toDateInput').val();
+            });
+
+            $('#fromDateInput').datepicker(datepicker_options);
+            $('#toDateInput').datepicker(datepicker_options);
+
+            $('#fromDateInput').blur(function ()
+            {
+                var id = '#fromDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $('#toDateInput').blur(function ()
+            {
+                var id = '#toDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+
+            $('#accomInput').autocomplete({
+                source: '{{ path("ws_accommodations") }}',
+                delay: 500,
+                minLength: 4
+            });
+
+        });
+    </script>
+{% endblock %}

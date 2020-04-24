@@ -1,0 +1,988 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Packages{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.1/css/bootstrap-select.min.css">
+    <style>
+        #flightsSelect {
+            overflow: hidden;
+        }
+        html {
+            min-height:1px;
+        }
+        #packages {font-size: 0.85em;}
+        #bulkTable {font-size: 0.85em;}
+        .in-sup {
+            width: 50px!important;
+        }
+        .st {
+            text-decoration: line-through;
+        }
+        .br {
+            border-right: 2px solid #eceeef;
+        }
+        .hidden {
+            display: none;
+        }
+        #searchinfo {
+            background-color: #fff;
+            z-index:99;
+            text-align: center;
+            padding: 0.6em;
+            width: 100%;
+        }
+        .searchinfo-fixed {
+            position: fixed;
+            top: 56px;
+        }
+        #bulkModal .modal-dialog{
+            overflow-y: initial !important
+        }
+        #bulkModal .modal-body{
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        #infoModal table.table-sm {
+            font-size: 0.8em;
+        }
+
+        .hide-sale-link {
+            float: right;
+            margin-right: 10px;
+        }
+
+        .hide-sale-link i.fa-eye-slash {
+            color: #FF0000;
+        }
+
+        .bulk_edit_link i.fa-pencil {
+            position: relative;
+            left: -8px;
+            top: -1px;
+            margin-right: -5px !IMPORTANT;
+        }
+
+        .bulk_edit_link + .btn > i.fa {
+            margin-right: 5px;
+        }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="header">
+            <h1>Price Control</h1>
+            <p class="lead">With this tool you are able to adjust our prices. Changes are logged on each line and the latest are visible from <a href="{{ path('yield_packages_log') }}">here</a>.</p>
+        </div>
+
+        {% if allow_warning == 1 %}
+            <!--div class="alert alert-danger alert-dismissible" role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+            </button>
+            <p class="mb-0"><strong>Please be careful!</strong> You are one of the selected few who can make changes to production prices. This system is still in its test phase and you should double check prices are applied correctly.</p>
+            </div-->
+        {% else %}
+            <div class="alert alert-warning alert-dismissible" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <p class="mb-0"><strong>Test mode</strong> Please try, nothing will be applied to production environment.</p>
+            </div>
+        {% endif %}
+
+        <hr>
+
+        <form action="{{ path('yield_packages') }}" method="GET">
+            <div class="row">
+                <div class="col-md-4 col-sm-4">
+                    <div class="form-group">
+                        <label for="promotionSelect">Promotion</label>
+                        <select class="form-control selectpicker" id="promotionSelect" name="prom">
+                            <option value="">Please choose</option>
+                            {% for optgroup,optgroup_promotions in promotions %}
+                                <optgroup label="{{ optgroup }}">
+                                    {% for prom_cd,promotion in optgroup_promotions %}
+                                        <option value="{{ prom_cd }}" {% if search.prom == prom_cd %}selected{% endif %}>{{ promotion }}</option>
+                                    {% endfor %}
+                                </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-8">
+                    <div class="form-group">
+                        <label>Dates</label>
+                        <div class="input-group input-daterange">
+                            <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="from" value="{{ search.from }}">
+                            <div class="input-group-addon">to</div>
+                            <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="to" value="{{ search.to }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-8">
+                    <div class="form-group">
+                        <label for="depSelect">Airports</label>
+                        <div class="input-group">
+                            <select class="form-control selectpicker" id="depSelect" data-live-search="true" name="dep_pt">
+                                <option value="">ALL</option>
+                                {% for airport in dep_airports %}
+                                    <option value="{{ airport.PT_CD }}" data-subtext="{{ airport.NAME }}" {% if search.dep_pt == airport.PT_CD %}selected{% endif %}>{{ airport.PT_CD }}</option>
+                                {% endfor %}
+                            </select>
+
+                            <span class="input-group-addon" id="basic-addon1">to</span>
+
+                            <select class="form-control selectpicker" id="arrSelect" data-live-search="true" name="arr_pt">
+                                <option value="">ALL</option>
+                                {% for airport in arr_airports %}
+                                    <option value="{{ airport.PT_CD }}" data-subtext="{{ airport.NAME }}" {% if search.arr_pt == airport.PT_CD %}selected{% endif %}>{{ airport.PT_CD }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-4">
+                    <div class="form-group">
+                        <label for="arrSelect">Flight</label>
+                        <select name="flights[]" class="form-control selectpicker show-tick" multiple="multiple" data-actions-box="true" id="flightsSelect" data-live-search="true" data-size="10">
+                            {% for flight in flights %}
+                                <option value="{{ flight.CD }}" {% if flight.CD in search.flights %}selected{% endif %}>{{ flight.CD }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-4">
+                    <div class="form-group">
+                        <label for="searchButton">Stay</label>
+                        <div class="input-group">
+                            <input name="sstay" id="stayFromInput" type="text" class="form-control" placeholder="ALL" value="{{ search.sstay }}">
+                            <span class="input-group-addon" id="basic-addon1">to</span>
+                            <input name="estay" id="stayToInput" type="text" class="form-control" placeholder="ALL" value="{{ search.estay }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-4">
+                    <div class="form-group">
+                        <label for="accomInput">Accommodation</label>
+                        <div class="input-group">
+                            <input name="stc_stk_cd" id="accomInput" type="text" class="form-control" placeholder="ALL" value="{{ search.stc_stk_cd }}" style="text-transform: uppercase;">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-4">
+                    <div class="form-group">
+                        <label for="hideOrShowHiddenSale">Hide/Show Hidden sale</label>
+                        <div class="input-group">
+                            <select name="hide_sale" id="hideOrShowHiddenSale" class="form-control selectpicker">
+                                <option value="">No filter</option>
+                                <option value="hide">Hide hidden sale</option>
+                                <option value="show">Show only hidden sale</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-sm-4">
+                    <div class="form-group">
+                        <label for="hideOrShowHiddenSale"></label>
+                        <div class="input-group">
+
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-sm-12">
+                    <div class="form-check">
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="checkbox" id="hideSeatsCheckbox" value="1" name="hide_seats" {% if search.hide_seats %}checked{% endif %}> Hide if no seats
+                        </label>
+                        <label class="form-check-label ml-4">
+                            <input class="form-check-input" type="checkbox" id="hideRoomsCheckbox" value="1" name="hide_rooms" {% if search.hide_rooms %}checked{% endif %}> Hide if no rooms
+                        </label>
+                        <label class="form-check-label ml-4">
+                            <input class="form-check-input" type="checkbox" id="hideHotelNameCheckbox" value="1" name="hide_ht_name" {% if search.hide_ht_name %}checked{% endif %}> Hide hotel name
+                        </label>
+                        <label class="form-check-label ml-4">
+                            <input class="form-check-input" type="checkbox" id="hideRoomNameCheckbox" value="1" name="hide_rm_name" {% if search.hide_rm_name %}checked{% endif %}> Hide room name
+                        </label>
+                        <label class="form-check-label ml-4">
+                            <input class="form-check-input" type="checkbox" id="showDelCheckbox" value="1" name="show_del" {% if search.show_del %}checked{% endif %}> Show del_fg='Y'
+                        </label>
+                        <label class="form-check-label ml-4">
+                            <input class="form-check-input" type="checkbox" id="rememberState" value="1" name="remember_state" {% if search.remember_state %}checked{% endif %}> Remember state
+                        </label>
+                        <label class="form-check-label ml-4">
+                            <input class="form-check-input" type="checkbox" id="costshhide" value="0" name="cost_data" {% if costCache==1 %}checked{% endif %}>Hide cost
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-sm-12">
+                    <div class="form-check">
+                    </div>
+                </div>
+
+                <div class="col-lg-12">
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary form-control" id="searchButton">Search</button>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+
+    </div>
+
+    {% if packages is not empty %}
+        <div class="container-fluid">
+            <hr>
+
+            <div id="searchinfo">
+                {% if search.key_data %}
+                    Key data: <strong>{{ search.key_data }}</strong>
+                {% else %}
+                    Promotion: <strong>{{ search.prom }}</strong> /
+                    Date: <strong>{% if search.from == search.to %}{{ search.from }}{% else %}{{ search.from }} to {{ search.to }}{% endif %}</strong> /
+                    Airports: <strong>{% if search.dep_pt %}{{ search.dep_pt }}{% else %}ALL{% endif %}
+                        - {% if search.arr_pt %}{{ search.arr_pt }}{% else %}ALL{% endif %}</strong> /
+                    Flights: <strong>{% if search.flights %}{{ search.flights|join(', ') }}{% else %}ALL{% endif %}</strong> /
+                    Stay: <strong>{% if search.sstay or search.estay %}
+                        {% if search.sstay == search.estay %}
+                            {{ search.sstay }}
+                        {% else %}
+                            {% if search.sstay %}{{ search.sstay }}{% else %}ALL{% endif %}
+                            to
+                            {% if search.estay %}{{ search.estay }}{% else %}ALL{% endif %}
+                        {% endif %}
+                    {% else %}
+                        ALL
+                    {% endif %}</strong> /
+                Stock: <strong>{% if search.stc_stk_cd %}{{ search.stc_stk_cd }}{% else %}ALL{% endif %}</strong>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <table id="packages" class="table table-striped table-sm" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th rowspan="2">Date</th>
+                    <th rowspan="2">Stay</th>
+                    <th rowspan="2">Dep</th>
+                    <th rowspan="2">Arr</th>
+                    <th rowspan="2">Seats</th>
+                    <th rowspan="2">Accom <i id="iconFilter" class="fa fa-filter"></i></th>
+                    <th rowspan="2">Room</th>
+                    <th rowspan="2" class="br">Avail</th>
+                    <th colspan="2" class="br">Adult</th>
+                    <th colspan="2" class="br">Child 1</th>
+                    <th colspan="2" class="br">Child 2</th>
+                        {% if costCache == 0 %}
+                        <th colspan="2" class="br cost">Cost</th>
+                        <th colspan="2" class="br cost">Sell</th>
+                        <th colspan="1" class="br cost">Currency</th>
+                        <th rowspan="2" class="no-sort"></th>
+                        {% else %}
+                        <th rowspan="2" class="no-sort"></th>
+                        {% endif %}
+                </tr>
+                <tr>
+                    <th class="no-sort">Prc</th>
+                    <th class="br no-sort">Adj</th>
+                    <th class="no-sort">Prc</th>
+                    <th class="br no-sort">Adj</th>
+                    <th class="no-sort">Prc</th>
+                    <th class="br no-sort">Adj</th>
+                        {% if costCache == 0 %}
+                        <th class="no-sort cost">Board</th>
+                        <th class="br no-sort cost">Cost</th>
+                        <th class="no-sort cost">Board</th>
+                        <th class="br no-sort cost">Cost</th>
+                        <th class="br no-sort cost">Currency</th>
+                        {% endif %}
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for key_data,package in packages %}
+                    <tr
+                        data-key-data="{{ key_data }}"
+                        data-adu-prc="{{ package.a_prc }}"
+                        data-adu-sup="{{ package.a_sup }}"
+                        data-chd1-prc="{{ package.c1_prc }}"
+                        data-chd1-sup="{{ package.c1_sup }}"
+                        data-chd2-prc="{{ package.c2_prc }}"
+                        data-chd2-sup="{{ package.c2_sup }}"
+                        data-accom-cd="{{ package.h_cd }}"
+                        data-rm-cd="{{ package.rm_cd }}"
+                        data-hide-accom-state="{{ package.hide_sale == true ? 'hidden' : 'shown' }}"
+                        >
+                        <td data-order="{{ package.dt|date('Ymd') }}"> {{ package.dt|date('d-M') }}</td>
+                        <td>{{ package.stay }}</td>
+                        <td>{{ package.dep_cd }}</td>
+                        <td>{{ package.arr_cd }}</td>
+                        <td>{{ package.seats }}</td>
+
+                        <td data-search="{{ package.h_nm }} {{ package.h_cd }}"
+                            {% if search.hide_ht_name %}
+                                data-toggle="tooltip" data-placement="top" data-html="true" title="{{ package.h_nm }}" data-animation="false"
+                            {% endif %}
+                            >
+                            {% if search.hide_ht_name %}
+                                {{ package.h_cd }}
+                            {% else %}
+                                {{ package.h_nm }} ({{ package.h_cd }})
+                            {% endif %}
+                            <a href="#" class="hide-sale-link">
+                                {% if package.hide_sale %}
+                                    <i class="fa fa-eye-slash"></i>
+                                {% else %}
+                                    <i class="fa fa-eye"></i>
+                                {% endif %}
+                            </a>
+                        </td>
+
+                        <td data-search="{{ package.rm_nm }} {{ package.rm_cd }}"
+                            {% if search.hide_rm_name %}
+                                data-toggle="tooltip" data-placement="top" data-html="true" title="{{ package.rm_nm }}" data-animation="false"
+                            {% endif %}
+                            >
+                            {% if search.hide_rm_name %}
+                                {{ package.rm_cd }}
+                            {% else %}
+                                {{ package.rm_nm }} ({{ package.rm_cd }})
+                            {% endif %}
+                        </td>
+
+                        <td class="br">{{ package.rooms }}</td>
+                        <td data-prc="{{ package.a_prc }}" class="adu-price">
+                            {% if package.a_sup %}
+                                <span class="st">{{ package.a_prc|number_format }}</span><br>{{ (package.a_prc * 1.0 + package.a_sup * 1.0)|number_format }}
+                            {% else %}
+                                {{ package.a_prc|number_format }}
+                            {% endif %}
+                        </td>
+
+                        <td class="br"><input type="text" value="{{ package.a_sup }}" class="form-control form-control-sm in-sup" data-sup-type="adu-sup" data-price-type="adu-price"></td>
+                        <td data-prc="{{ package.c1_prc }}" class="chd1-price">
+                            {% if package.c1_sup %}
+                                <span class="st">{{ package.c1_prc|number_format }}</span><br>{{ (package.c1_prc * 1.0 + package.c1_sup * 1.0)|number_format }}
+                            {% else %}
+                                {{ package.c1_prc|number_format }}
+                            {% endif %}
+                        </td>
+                        <td class="br"><input type="text" value="{{ package.c1_sup }}" class="form-control form-control-sm in-sup" data-sup-type="chd1-sup" data-price-type="chd1-price"></td>
+                        <td data-prc="{{ package.c2_prc }}" class="chd2-price">
+                            {% if package.c2_sup %}
+                                <span class="st">{{ package.c2_prc|number_format }}</span><br>{{ (package.c2_prc * 1.0 + package.c2_sup * 1.0)|number_format }}
+                            {% else %}
+                                {{ package.c2_prc|number_format }}
+                            {% endif %}
+                        </td>
+                        <td class="br"><input type="text" value="{{ package.c2_sup }}" class="form-control form-control-sm in-sup" data-sup-type="chd2-sup" data-price-type="chd2-price"></td>
+                            {% if costCache == 0 %}
+                            <td class="no-sort cost">{{ package.cost_bb_cd }}</td>
+                            <td class="br no-sort cost">{{ package.cost_cbb }}</td>
+                            <td class="no-sort cost">{{ package.sell_bb_cd }}</td>
+                            <td class="br no-sort cost">{{ package.sell_cbb }}</td>
+                            <td class="br no-sort cost">{{ package.cur_id }}</td>
+                        {%  else %}
+
+                        {% endif %}
+                        <td><button class="btn btn-sm btn-secondary" data-toggle="modal" data-target="#infoModal"><i class="fa fa-info-circle" aria-hidden="true"></i></button></td>
+                        <!--td><i class="fa fa-bar-chart" aria-hidden="true" data-toggle="modal" data-target="#chartModal"></i></td-->
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    <div class="container-fluid">
+
+        <!-- Modal -->
+        <div class="modal fade" id="bulkModal" tabindex="-1" role="dialog" aria-labelledby="bulkModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="bulkModalLabel">Bulk adjustments</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="aduBulk">Adult</label>
+                                        <input type="text" class="form-control" id="aduBulk" name="adu">
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="chd1Bulk">Child 1</label>
+                                        <input type="text" class="form-control" id="chd1Bulk" name="chd1">
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="form-group">
+                                        <label for="chd2Bulk">Child 2</label>
+                                        <input type="text" class="form-control" id="chd2Bulk" name="chd2">
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div id="bulkPlaceholder"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="bulkSaveButton">Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal -->
+        <div class="modal fade" id="accomModal" tabindex="-1" role="dialog" aria-labelledby="accomModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="accomModalLabel">Accommodation filter</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="accommodations">
+                            {% for accom_cd, accom_name in accommodations %}
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input class="form-check-input" type="checkbox" value="{{ accom_cd }}" checked>
+                                        {{ accom_name }} ({{ accom_cd }})
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="selectCheckboxes">Select all</button>
+                        <button type="button" class="btn btn-secondary" id="deselectCheckboxes">Deselect all</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary"  data-dismiss="modal" id="accomFilter">Filter</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Modal -->
+        <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="infoModalLabel">Detailed information</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Loading...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Clear all adjustments Modal -->
+    <div class="modal fade" id="clearAllModal" tabindex="-1" role="dialog" aria-labelledby="clearAllModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="clearAllModalLabel">Are you sure you want to clear all adjustements?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        This will clear all adjustments made on this search. Note the table search do not have
+                        effect on which rows are cleared.
+                    </p>
+                    <div class="alert alert-warning ie-warning">
+                        <span>This feature might not work in Internet Explorer. Please use Google Chrome or Mozilla Firefox.</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-danger" id="runClearAllAdjustments">Yes, clear all</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+        {% endblock %}
+
+            {% block javascripts_footer %}
+                {{ parent() }}
+                {{ datatable_js|raw }}
+                <script src="{{ asset('assets/js/jquery.number.min.js') }}"></script>
+                <script src="https://cdn.jsdelivr.net/jquery.loadingoverlay/latest/loadingoverlay.min.js"></script>
+                <script src="{{ asset('assets/js/bootstrap-select.js') }}"></script>
+                <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+                <script>
+                    $(document).ready(function () {
+                        $('#hideOrShowHiddenSale').val('{{ search.hide_sale }}');
+                    });
+                </script>
+                <script type="text/javascript">
+                    $(document).ready(function () {
+                        if ($('#searchinfo').length) {
+                            var searchinfo_pos = $('#searchinfo').offset().top;
+                            var topbar_height = 56;
+
+                            $(window).scroll(function () {
+                                if ($(this).scrollTop() > (searchinfo_pos - topbar_height)) {
+                                    $('#searchinfo').addClass('searchinfo-fixed');
+                                } else {
+                                    $('#searchinfo').removeClass('searchinfo-fixed');
+                                }
+                            });
+                        }
+
+                        var dt = '';
+                        $("#fromDateInput").keyup(function () {
+                            dt = $('#fromDateInput').val();
+                        });
+                        $("#toDateInput").keyup(function () {
+                            dt = $('#toDateInput').val();
+                        });
+
+                        $('#fromDateInput').datepicker(datepicker_options);
+                        $('#toDateInput').datepicker(datepicker_options);
+
+                        $('#fromDateInput').blur(function ()
+                        {
+                            var id = '#fromDateInput';
+                            formatDate(id, dt, datepicker_options);
+                            dt = '';
+                        });
+
+                        $('#toDateInput').blur(function ()
+                        {
+                            var id = '#toDateInput';
+                            formatDate(id, dt, datepicker_options);
+                            dt = '';
+                        });
+
+
+                        $('#accomInput').autocomplete({
+                            source: '{{ path("ws_accommodations") }}',
+                            delay: 500,
+                            minLength: 4
+                        });
+
+                        $(".selectpicker").selectpicker({});
+
+                        $('#bulkSaveButton').on('click', function (e) {
+                            $.LoadingOverlay("show");
+
+                            saveBulk();
+                        });
+
+                        $('#runClearAllAdjustments').on('click', function (event)
+                        {
+                            var closeOverlay = function () {
+                                $.LoadingOverlay('hide');
+                                $('#clearAllModal').modal('hide')
+                            };
+
+                            $.LoadingOverlay('show');
+                            clearAllAdjustments(window.dataTable)
+                                    .then(closeOverlay)
+                                    .catch(function (xhr)
+                                    {
+                                        closeOverlay();
+                                        alert("Error! Could not clear all adjustments. Please contact IT.\n\nSystem Response:\n" + xhr.responseText);
+                                    });
+                        });
+                        $('#searchButton').on('click', function (e) {
+                            $.LoadingOverlay("show");
+                            table.clear().draw();
+                            if (!$('#rememberState').is(':checked')) {
+                                table.state.clear();
+                            }
+
+                            return true;
+                        });
+
+                        var actionButtons = '<a href="#" class="btn btn-sm btn-secondary btn-tertiary bulk_edit_link" data-toggle="modal" data-target="#bulkModal" '
+                                + 'data-backdrop="static"><i class="fa fa-files-o"></i><i class="fa fa-pencil"></i>Bulk change</a> '
+                                + '<a href="#" class="btn btn-sm btn-secondary btn-danger" data-toggle="modal" data-target="#clearAllModal" '
+                                + 'data-backdrop="static"><i class="fa fa-minus-circle"></i>Clear all</a>';
+
+                        var table = $('#packages').DataTable({
+                            pageLength: 25,
+                            drawCallback: function () {
+                                $('[data-toggle="tooltip"]').tooltip();
+                                resetSupChanges();
+                            },
+                            order: [[5, 'asc']],
+                            columnDefs: [
+                                {
+                                    targets: 'no-sort',
+                                    orderable: false,
+                                }
+                            ],
+                            lengthMenu: [10, 25, 50, 100, 500],
+                            language: {
+                                lengthMenu: 'Show _MENU_ entries. ' + actionButtons
+                            },
+                            stateSave: true
+                        });
+                        window.dataTable = table;
+
+
+                        // Modal for results
+                        $('#bulkModal').on('show.bs.modal', function (event) {
+
+                            var bulkTable = $('<table class="table table-striped table-sm" cellspacing="0" width="100%" id="bulkTable">');
+                            bulkTable.append('<thead><tr><th>Date</th><th>Stay</th><th>Dep.</th><th>Arr.</th><th>Accom</th><th>Room</th><th>Adult</th><th>Child 1</th><th>Child 2</th></tr></thead>');
+
+                            var tBody = $('<tbody>');
+
+                            table.rows({page: 'current'}).every(function (rowIdx, tableLoop, rowLoop) {
+                                var tr = $(this.node());
+                                var d = this.data();
+
+                                var row = '<tr data-key-data="' + tr.data('key-data') + '" data-adu-prc="' + tr.data('adu-prc') + '" data-adu-sup="' + tr.data('adu-sup') + '" data-adu-sup-orig="' + tr.data('adu-sup') + '" data-chd1-prc="' + tr.data('chd1-prc') + '" data-chd1-sup="' + tr.data('chd1-sup') + '" data-chd1-sup-orig="' + tr.data('chd1-sup') + '" data-chd2-prc="' + tr.data('chd2-prc') + '" data-chd2-sup="' + tr.data('chd2-sup') + '" data-chd2-sup-orig="' + tr.data('chd2-sup') + '" data-rm-cd="' + tr.data('rm-cd') + '">';
+                                row += '<td title="' + tr.data('key-data') + '">' + d[0].display + '</td>';
+                                row += '<td>' + d[1] + '</td>';
+                                row += '<td>' + d[2] + '</td>';
+                                row += '<td>' + d[3] + '</td>';
+                                row += '<td title="' + accommodations[tr.data('accom-cd')] + '">' + tr.data('accom-cd') + '</td>';
+                                row += '<td>' + tr.data('rm-cd') + '</td>';
+                                row += '<td class="adu">' + pricePresentation(tr.data('adu-prc'), tr.data('adu-sup')) + '</td>';
+                                row += '<td class="chd1">' + pricePresentation(tr.data('chd1-prc'), tr.data('chd1-sup')) + '</td>';
+                                row += '<td class="chd2">' + pricePresentation(tr.data('chd2-prc'), tr.data('chd2-sup')) + '</td>';
+                                row += '</tr>';
+                                tBody.append(row);
+                            });
+
+                            bulkTable.append(tBody);
+
+                            var modal = $(this);
+                            modal.find('#bulkPlaceholder').html(bulkTable);
+                        });
+
+                        $('#bulkModal').on('shown.bs.modal', function (event) {
+
+                            resetBulk('adu');
+                            resetBulk('chd1');
+                            resetBulk('chd2');
+
+                        });
+
+
+                        // Modal for results
+                        $('#infoModal').on('show.bs.modal', function (event) {
+                            var $closest_tr = $(event.relatedTarget).closest('tr');
+
+                            var modal = $(this);
+                            modal.find('.modal-title').text('Detailed information (' + $closest_tr.data('accom-cd') + ':' + $closest_tr.data('rm-cd') + ')');
+                            modal.find('.modal-body').html('<p>Please wait while the information is fetched...</p>');
+                            modal.find('.modal-body').load('{{ path("yield_info_modal") }}?key_data=' + $closest_tr.data('key-data'));
+                        });
+
+
+                        $("#iconFilter").click(function (event) {
+                            $('#accomModal').modal();
+                            event.stopPropagation();
+                        });
+
+                        $("#deselectCheckboxes").click(function () {
+                            $("form#accommodations input[type=checkbox]").each(function () {
+                                $(this).prop('checked', false);
+                            });
+                        });
+
+                        $("#selectCheckboxes").click(function () {
+                            $("form#accommodations input[type=checkbox]").each(function () {
+                                $(this).prop('checked', true);
+                            });
+                        });
+
+                        $("#deselectCheckboxes").click(function () {
+                            $("form#accommodations input[type=checkbox]").each(function () {
+                                $(this).prop('checked', false);
+                            });
+                        });
+
+                        $("#accomFilter").click(function () {
+                            $.fn.dataTable.ext.search.pop();
+
+                            var selectedAccommodations = [];
+
+                            $("form#accommodations input[type=checkbox]").each(function () {
+                                if ($(this).is(':checked')) {
+                                    selectedAccommodations.push(this.value);
+                                }
+                            });
+
+                            $.fn.dataTable.ext.search.push(
+                                    function (settings, data, dataIndex) {
+                                        return $.inArray($(table.row(dataIndex).node()).data('accom-cd'), selectedAccommodations) >= 0;
+                                    }
+                            );
+                            table.draw();
+                        });
+
+                        $('.hide-sale-link').click(function (event)
+                        {
+                            event.preventDefault();
+                            var element = $(event.target);
+                            var row = element.parents('tr');
+                            var keyData = row.attr('data-key-data');
+
+                            var currentState = row.attr('data-hide-accom-state');
+                            markAccomAsLoading(row);
+
+                            var hideSale = currentState == 'shown';
+
+                            var supplements = {};
+                            supplements['adu_sup'] = row.data('adu-sup');
+                            supplements['chd1_sup'] = row.data('chd1-sup');
+                            supplements['chd2_sup'] = row.data('chd2-sup');
+
+
+                            $.ajax({
+                                url: '/utils/uat/yield/packages/hide-sale',
+                                type: 'post',
+                                dataType: 'json',
+                                data: {keyData: keyData, hideSale: hideSale, supplements: supplements},
+                                success: markAccom.bind(null, row, currentState),
+                                error: markAccomAsFailed.bind(null, row, currentState)
+                            });
+                        });
+
+                    });
+
+                    function markAccomAsLoading(row)
+                    {
+                        row.attr('data-hide-accom-state', 'loading');
+                        var icon = row.find('.hide-sale-link').find('i.fa');
+                        icon.removeClass('fa-eye fa-eye-slash').addClass('fa-spinner fa-spin');
+                    }
+
+                    function markAccom(row, oldState)
+                    {
+                        var icon = row.find('.hide-sale-link').find('i.fa');
+
+                        if (oldState == 'shown') {
+                            row.attr('data-hide-accom-state', 'hidden');
+                            icon.removeClass('fa-eye fa-spin fa-spinner').addClass('fa-eye-slash');
+                        } else {
+                            row.attr('data-hide-accom-state', 'shown');
+                            icon.removeClass('fa-eye-slash fa-spin fa-spinner').addClass('fa-eye');
+                        }
+                    }
+
+                    function markAccomAsFailed(row, oldState, xhr)
+                    {
+                        if (oldState == 'shown') {
+                            markAccom(row, 'hidden');
+                        } else {
+                            markAccom(row, 'shown');
+                        }
+
+                        var accom = row.attr('data-accom-cd');
+                        alert('Could not change sale visibility for ' + accom + "\n" + 'Please try again or contact IT.');
+                        console.log(xhr.responseJSON);
+                    }
+
+                    function resetBulk(tp) {
+                        $('#' + tp + 'Bulk').val('');
+                        $('#' + tp + 'Bulk').unbind('change');
+                        $('#' + tp + 'Bulk').change(function () {
+                            var adj = $(this).val() * 1.0;
+                            $('#bulkTable > tbody > tr').each(function () {
+                                var prc = $(this).data(tp + '-prc') * 1.0;
+                                var origSup = $(this).data(tp + '-sup-orig') * 1.0;
+                                var newSup = origSup + adj;
+                                if (prc == 0) {
+                                    newSup = origSup;
+                                } else if (prc + newSup < 0) {
+                                    newSup = origSup;
+                                }
+                                $(this).data(tp + '-sup', newSup);
+                                $(this).find('.' + tp).html(pricePresentation(prc, newSup));
+                            });
+                        });
+                    }
+
+                    function resetSupChanges() {
+                        $('.in-sup').unbind('change');
+                        $('.in-sup').change(function () {
+                            var sup_type = $(this).data('sup-type');
+                            var price_type = $(this).data('price-type');
+
+                            var $closest_tr = $(this).closest('tr');
+                            var $price_td = $closest_tr.find('td.' + price_type);
+
+                            var price = $price_td.data('prc');
+                            var supplement = $(this).val();
+                            if (supplement.charAt(0) == '=' || supplement.charAt(0) == '/') {
+                                supplement = supplement.substring(1) - price;
+                                $(this).val(supplement)
+                            }
+
+                            if ((price * 1.0 + supplement * 1.0) < 0) {
+                                alert('Sorry, you can\'t go below zero.');
+                                return false;
+                            }
+
+                            $closest_tr.data(sup_type, supplement);
+
+                            $price_td.html(pricePresentation(price, supplement) + ' <i class="fa fa-spinner fa-spin fa-fw"></i>');
+
+                            var jsonObj = [];
+                            var package = {};
+                            package['pkg_id'] = $closest_tr.data('key-data');
+                            package['adu_sup'] = $closest_tr.data('adu-sup');
+                            package['chd1_sup'] = $closest_tr.data('chd1-sup');
+                            package['chd2_sup'] = $closest_tr.data('chd2-sup');
+                            package['rm_cd'] = $closest_tr.data('rm-cd');
+                            package['adu_prc'] = $closest_tr.data('adu-prc');
+                            package['chd1_prc'] = $closest_tr.data('chd1-prc');
+                            package['chd2_prc'] = $closest_tr.data('chd2-prc');
+                            jsonObj.push(package);
+                            var jsonString = JSON.stringify(jsonObj);
+
+                            $.post("{{ path('yield_ajax_update') }}", {
+                                packages: jsonString
+                            }, function (response) {
+                                var ws_response = JSON.parse(response).Response;
+                                if (ws_response.Status == 'OK') {
+                                    $price_td.html(pricePresentation(price, supplement));
+                                } else {
+                                    alert('Error ' + ws_response.Error.Err_No + ': ' + ws_response.Error.Err_Desc);
+                                }
+                            }, 'json');
+
+                        });
+                    }
+
+                    function pricePresentation(price, supplement) {
+                        if (supplement == 0) {
+                            return $.number(price);
+                        } else {
+                            var newprice = price * 1.0 + supplement * 1.0
+                            return '<span class="st">' + $.number(price) + '</span><br>' + $.number(newprice);
+                        }
+                    }
+
+                    function saveBulk() {
+                        var jsonObj = [];
+
+                        $('#bulkTable > tbody > tr').each(function () {
+                            var package = {};
+                            var keyData = $(this).data('key-data');
+                            package['pkg_id'] = keyData;
+                            package['adu_sup'] = $(this).data('adu-sup') * 1.0;
+                            package['chd1_sup'] = $(this).data('chd1-sup') * 1.0;
+                            package['chd2_sup'] = $(this).data('chd2-sup') * 1.0;
+                            package['rm_cd'] = $(this).data('rm-cd');
+                            package['adu_prc'] = $(this).data('adu-prc') * 1.0;
+                            package['chd1_prc'] = $(this).data('chd1-prc') * 1.0;
+                            package['chd2_prc'] = $(this).data('chd2-prc') * 1.0;
+
+                            jsonObj.push(package);
+                        });
+
+                        var jsonString = JSON.stringify(jsonObj);
+
+                        $.post("{{ path('yield_ajax_update') }}", {
+                            packages: jsonString
+                        }, function (response) {
+                            var ws_response = JSON.parse(response).Response;
+                            if (ws_response.Status == 'OK') {
+                                for (var i = 0; i < jsonObj.length; i++) {
+                                    var package = jsonObj[i];
+
+                                    var $tr = $('tr[data-key-data="' + package.pkg_id + '"]');
+
+                                    $tr.data('adu-sup', package.adu_sup);
+                                    $tr.data('chd1-sup', package.chd1_sup);
+                                    $tr.data('chd2-sup', package.chd2_sup);
+
+                                    $tr.find('td.adu-price').html(pricePresentation($tr.data('adu-prc'), package.adu_sup));
+                                    $tr.find('input[data-sup-type="adu-sup"]').val(package.adu_sup);
+
+                                    $tr.find('td.chd1-price').html(pricePresentation($tr.data('chd1-prc'), package.chd1_sup));
+                                    $tr.find('input[data-sup-type="chd1-sup"]').val(package.chd1_sup);
+
+                                    $tr.find('td.chd2-price').html(pricePresentation($tr.data('chd2-prc'), package.chd2_sup));
+                                    $tr.find('input[data-sup-type="chd2-sup"]').val(package.chd2_sup);
+                                }
+
+                                $('#bulkModal').modal('hide');
+                                $.LoadingOverlay("hide");
+
+                            } else {
+                                alert('Error ' + ws_response.Error.Err_No + ': ' + ws_response.Error.Err_Desc);
+
+                                $.LoadingOverlay("hide");
+
+                            }
+                        }, 'json');
+                    }
+
+                    function clearAllAdjustments(dataTableInstance)
+                    {
+                        var packagesToUpdate = {};
+                        dataTableInstance.rows({page: 'current'}).every(function ()
+                        {
+                            var element = $(this.node());
+                            var aduSup = element.data('adu-sup'),
+                                    chd1Sup = element.data('chd1-sup'),
+                                    chd2Sup = element.data('chd2-sup'),
+                                    aduPrc = element.data('adu-prc'),
+                                    chd1Prc = element.data('chd1-prc'),
+                                    chd2Prc = element.data('chd2-prc'),
+                                    rmCd = element.data('rm-cd'),
+                                    isHidden = element.data('hide-accom-state') == 'hidden';
+
+                            if (aduSup !== 0 || chd1Sup !== 0 || chd2Sup !== 0) {
+                                packagesToUpdate[element.data('key-data')] = {
+                                    hideSale: isHidden ? 'Y' : 'N',
+                                    rmCd: rmCd,
+                                    aduPrc: aduPrc,
+                                    chd1Prc: chd1Prc,
+                                    chd2Prc: chd2Prc
+                                };
+                            }
+                        });
+
+                        return new Promise(function (resolve, reject)
+                        {
+                            $.ajax({
+                                url: '/utils/uat/yield/packages/clear-all-adjustments',
+                                type: 'post',
+                                dataType: 'json',
+                                data: {packages: packagesToUpdate},
+                                success: resolve,
+                                error: reject
+                            });
+                        })
+                    }
+                </script>
+            {% endblock %}

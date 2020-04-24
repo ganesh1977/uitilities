@@ -1,0 +1,35 @@
+{% extends 'base.html.twig' %}
+{% form_theme form 'bootstrap_3_layout.html.twig' %}
+
+{% block title %}User{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+    <nav class="breadcrumb">
+      <a class="breadcrumb-item" href="{{ path('pub_users') }}">User Management</a>
+      <span class="breadcrumb-item active">User</span>
+    </nav>
+
+  	<h1>{% if user.id %}Edit user ({{ user.username }}){% else %}Create new user{% endif %}</h1>
+
+    {% for alert in alerts %}
+      <div class="alert alert-{{ alert[0] }}" role="alert">
+        {{ alert[1]|raw }}
+      </div>
+    {% endfor %}
+
+    {{ form_start(form) }}
+      {{ form_row(form.username) }}
+      {{ form_row(form.email) }}
+      {{ form_row(form.plainPassword.first) }}
+      {{ form_row(form.plainPassword.second) }}
+      {{ form_row(form.atcomresUsername) }}
+      {{ form_row(form.isActive) }}
+      {{ form_row(form.isExternal) }}
+      {{ form_row(form.roles) }}
+
+      <button class="btn btn-primary" type="submit">Save</button>
+    {{ form_end(form) }}
+
+  </div>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Airports{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+
+    <div class="container-fluid">
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item active">Airports Administration</span>
+        </nav>
+
+        <div class="header">
+            <span class="pull-right">
+                <a href="#" class="btn btn-sm btn-primary" data-toggle="modal" data-target="#editModal" data-id="">
+                  <i class="fa fa-3x fa-plus-circle"></i>
+                  <br />NEW AIRPORT
+                </a>
+            </span>
+
+            <h1>Airports</h1>
+            <hr style="margin-top: 2rem;">
+        </div>
+
+
+        <table id="airports" class="table table-striped" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>City Code</th>
+                    <th>City Name</th>
+                    <th>Country Name</th>
+                    <th>Country Code</th>
+                    {#<th>Timezone</th>#}
+                    {#<th>Lat</th>#}
+                    {#<th>Lon</th>#}
+                    {#<th>Numairports</th>#}
+                    {#<th>City</th>#}
+                    <th>Featured</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for airport in airports %}
+                <tr>
+                    <td>{{ airport.code }}</td>
+                    <td>{{ airport.name }}</td>
+                    <td>{{ airport.cityCode }}</td>
+                    <td>{{ airport.cityName }}</td>
+                    <td>{{ airport.countryName }}</td>
+                    <td>{{ airport.countryCode }}</td>
+                    {#<td>{{ airport.timezone }}</td>#}
+                    {#<td>{{ airport.lat }}</td>#}
+                    {#<td>{{ airport.lon }}</td>#}
+                    {#<td>{{ airport.numAirports }}</td>#}
+                    {#<td>{{ airport.city }}</td>#}
+                    <td>{% if airport.featured %} {{ airport.featured }} {% else %} 0 {% endif %}</td>
+                    <td>
+                        <div style="white-space: nowrap">
+                            <a href="#" class="btn btn-warning btn-sm" data-toggle="modal" data-target="#editModal" data-id="{{ airport.code }}">
+                                Edit
+                            </a>
+
+                            <button type="button" data-id="{{ airport.code }}" class="btn btn-danger btn-sm" name="delete_airport_button">Delete</button>
+                        </div>
+
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" id="editModal" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Airport</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Modal body text goes here.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script src="{{ asset('assets/js/dataTables.plugin.js') }}"></script>
+    <script src="{{ asset('assets/js/admin-airport.js') }}"></script>
+    <script type="text/javascript">
+
+        try {
+            var countries = [
+                {% for code, country in countries %}
+                {id: '{{ code }}', text: '{{ code }} - {{ country }}'},
+                {% endfor %}
+            ];
+        }
+        catch (e) {
+            alert('Could not load country data. Some features may not work as intended.');
+        }
+
+        $(document).ready(function ()
+        {
+            $('#airports').DataTable({"order": [[ 6, "desc" ]]});
+
+            $('#editModal').on('show.bs.modal', function (event) {
+                var btn = $(event.relatedTarget),
+                        airport_code = btn.data('id'),
+                        modal = $(this);
+
+                modal.find('.modal-title').text('New airport');
+                modal.find('.modal-body').html('<p align="center"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i></p>');
+
+                var path = '';
+                if (airport_code === '') {
+                    path = '{{ path('airport_new') }}';
+                }
+                else {
+                    modal.find('.modal-title').text('Edit airport');
+                    path = '/admin/airport/'+airport_code+'/edit';
+                }
+
+                modal.find('.modal-body').load(path, onModalLoad);
+
+            });
+
+            $('button[name="delete_airport_button"]').click(function(event) {
+
+                var airport_code = $(this).data('id');
+                var item = $(event.target);
+                var row =  item.closest('tr');
+                var airportCode = row.find('td:eq(0)');
+                airportCode = $(airportCode).text();
+
+                if (confirm("Are you sure to delete this airport code: " + airportCode+ "?")) {
+
+                    $(this).addClass('loading');
+
+                    $.ajax({
+                        url: '/admin/airport/delete',
+                        type: 'POST',
+                        data: JSON.stringify({code : airport_code}),
+                        dataType: "json",
+                        success: function (res) {
+                            location.reload();
+                            $(this).removeClass('loading');
+                        }.bind(this),
+                        error: function(xhr, textStatus, error) {
+                            alert(xhr.responseJSON.error);
+                        }.bind(this)
+                    });
+                }
+            });
+        });
+
+        var onModalLoad = function ()
+        {
+            airport.init();
+        };
+
+    </script>
+
+    <style>
+
+        button.loading:after {
+            content: '\f110';
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+            font: normal normal normal 14px/1 FontAwesome;
+            font-size: inherit;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-animation: fa-spin 2s infinite linear;
+            animation: fa-spin 2s infinite linear;
+            /*top: 35px;
+            left: 345px;*/
+        }
+
+    </style>
+{% endblock %}

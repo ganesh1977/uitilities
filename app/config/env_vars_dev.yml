@@ -1,0 +1,22 @@
+parameters:
+    exch_table_ids:
+        2239653: BT
+        2239652: SR
+        2239656: LM
+        2239654: SO
+        2239655: HF
+        30345213: UK
+
+    currency_ids:
+        BT: 2226766
+        SR: 2226767
+        LM: 2226765
+        SO: 2226768
+        HF: 2226769
+        UK: 2226771
+
+    atcore-webservice:
+        server: 192.168.218.4
+        env: PRMUAT
+
+    tour_operator_allotment_csv_path: /home/vagrant/Code/TourOperatorAllotment.csv

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- These meta tags come first. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="{{ asset('assets/img/favicon.ico') }}">
+
+    <title>{% block title %}Dashboard{% endblock %}</title>
+
+    <!-- Include the CSS -->
+		{% block stylesheets %}
+      <link href="{{ asset('assets/css/toolkit-inverse.min.css') }}" rel="stylesheet">
+    	<link href="{{ asset('assets/css/dashboard.css') }}" rel="stylesheet">
+		{% endblock %}
+
+    {% block javascripts_header %}{% endblock %}
+  </head>
+  <body>
+    
+    <div class="with-iconav">
+
+      <nav class="iconav">
+        <a class="iconav-brand" href="../index.html">
+          <span class="icon icon-aircraft-take-off iconav-brand-icon"></span>
+        </a>
+        <div class="iconav-slider">
+          <ul class="nav nav-pills iconav-nav flex-md-column">
+            <li class="nav-item">
+              <a class="nav-link" href="../index.html" title="Overview" data-toggle="tooltip" data-placement="right" data-container="body">
+                <span class="icon icon-home"></span>
+                <small class="iconav-nav-label hidden-md-up">Overview</small>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../order-history/index.html" title="Order history" data-toggle="tooltip" data-placement="right" data-container="body">
+                <span class="icon icon-text-document"></span>
+                <small class="iconav-nav-label hidden-md-up">History</small>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../fluid/index.html" title="Fluid layout" data-toggle="tooltip" data-placement="right" data-container="body">
+                <span class="icon icon-globe"></span>
+                <small class="iconav-nav-label hidden-md-up">Fluid layout</small>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="../icon-nav/index.html" title="Icon-nav" data-toggle="tooltip" data-placement="right" data-container="body">
+                <span class="icon icon-area-graph"></span>
+                <small class="iconav-nav-label hidden-md-up">Icon nav</small>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../docs/index.html" title="Docs" data-toggle="tooltip" data-placement="right" data-container="body">
+                <span class="icon icon-list"></span>
+                <small class="iconav-nav-label hidden-md-up">Docs</small>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="../index-light/index.html" title="Light UI" data-toggle="tooltip" data-placement="right" data-container="body">
+                <span class="icon icon-flash"></span>
+                <small class="iconav-nav-label hidden-md-up">Light UI</small>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" title="Signed in as mdo" data-toggle="tooltip" data-placement="right" data-container="body">
+                <img src="../assets/img/avatar-mdo.png" alt="" class="rounded-circle">
+                <small class="iconav-nav-label hidden-md-up">@mdo</small>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      
+  		<!-- Begin page content -->
+  		{% block body %}{% endblock %}
+  		<!-- End page content -->
+
+    </div>
+
+		{% block javascripts_footer %}
+      <!-- Include jQuery (required) and the JS -->
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+      <script src="{{ asset('assets/js/toolkit.min.js') }}"></script>
+		{% endblock %}
+
+  </body>
+</html>

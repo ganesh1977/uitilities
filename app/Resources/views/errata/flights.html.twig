@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Flight errata{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>Flight errata</h1>
+  		<p class="lead">Search in all our flight errata.</p>
+  	</div>
+  </div>
+
+	<table id="errata" class="table table-striped" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+        <th colspan="2">Book</th>
+        <th colspan="2">Travel</th>
+        <th colspan="6">Geography</th>
+      </tr>
+      <tr>
+        <th>From</th>
+        <th>To</th>
+        <th>From</th>
+        <th>To</th>
+        <th>From</th>
+        <th>To</th>
+        <!--th>Weekdays</th-->
+        <th>Transport</th>
+        <th>Dir</th>
+        <th>Lang</th>
+        <th>Erratum</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+        <tr>
+          <td>{{ result.BK_FROM_DT|date('d/m-y') }}</td>
+          <td>{{ result.BK_TO_DT|date('d/m-y') }}</td>
+          <td>{{ result.ST_DT|date('d/m-y') }}</td>
+          <td>{{ result.END_DT|date('d/m-y') }}</td>
+          <td>{{ result.DEP_CD }}</td>
+          <td>{{ result.ARR_CD }}</td>
+          <!--td>M T W T F S S</td-->
+          <td>{{ result.TRANSPORT_CD }}</td>
+          <td>{{ result.DIR_MTH }}</td>
+          <td>{{ result.LANG_SHORT_CD }}</td>
+          <td>{{ result.ERRATUM|striptags }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+  
+	<script type="text/javascript">
+    $(document).ready(function() {
+
+			$('#errata').DataTable();
+
+    });
+  </script>
+  
+{% endblock %}

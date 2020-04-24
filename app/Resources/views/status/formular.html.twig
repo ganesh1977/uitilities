@@ -1,0 +1,67 @@
+    <form action="{{ path('status') }}" method="GET">
+      <div class="row">
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group required">
+            <label for="brandSelect">Brand</label>
+            <select class="form-control" id="brandSelect" name="prom_cd" required>
+              <option value="bt" {% if search|length and search.prom_cd == 'bt' %}selected{% endif %}>Bravo Tours</option>
+              <option value="sr" {% if search|length and search.prom_cd == 'sr' %}selected{% endif %}>Solresor</option>
+              <option value="lm" {% if search|length and search.prom_cd == 'lm' %}selected{% endif %}>Matkavekka</option>
+              <option value="so" {% if search|length and search.prom_cd == 'so' %}selected{% endif %}>Solia</option>
+              <option value="hf" {% if search|length and search.prom_cd == 'hf' %}selected{% endif %}>Heimsferdir</option>
+              <option value="st" {% if search|length and search.prom_cd == 'st' %}selected{% endif %}>Sun Tours</option>
+              <option value="uk" {% if search|length and search.prom_cd == 'uk' %}selected{% endif %}>Primera Holidays UK</option>
+            </select>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group">
+            <label for="departurePointInput">Dep. Airport</label>
+            <input type="text" class="form-control" id="departurePointInput" name="dep_cd" value="{% if search|length %}{{ search.dep_cd }}{% endif %}" style="text-transform:uppercase;">
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group required">
+            <label for="accomInput">Accom. Code</label>
+            <input type="text" class="form-control" id="accomInput" name="accom_cd" value="{% if search|length %}{{ search.accom_cd }}{% endif %}" style="text-transform:uppercase;" required>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group">
+            <label for="roomCodeInput">Room Code</label>
+            <input type="text" class="form-control" id="roomCodeInput" name="rm_cd" value="{% if search|length %}{{ search.rm_cd }}{% endif %}" style="text-transform:uppercase;">
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group required">
+            <label for="arrivalDateInput">Arrival Date</label>
+            <div class="input-group date">
+              <input type="text" class="form-control disableAutoComplete" id="arrivalDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% endif %}" required><span class="input-group-addon"><i class="fa fa-calendar"></i></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group required">
+            <label for="stayInput">Stay Length</label>
+            <input type="text" class="form-control" id="stayInput" name="stay" value="{% if search|length %}{{ search.stay }}{% else %}7{% endif %}" required>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group required">
+            <label for="aduInput">Adults</label>
+            <input type="text" class="form-control" id="aduInput" name="n_adu" value="{% if search|length %}{{ search.n_adu }}{% else %}2{% endif %}" required>
+          </div>
+        </div>
+        <div class="col-sm-4 col-md-3">
+          <div class="form-group required">
+            <label for="chdInput">Children</label>
+            <input type="text" class="form-control" id="chdInput" name="n_chd" value="{% if search|length %}{{ search.n_chd }}{% else %}0{% endif %}" required>
+          </div>
+        </div>
+      
+        <div class="col-sm-12">
+          <button type="submit" class="btn btn-primary btn-block">View status</button>
+        </div>
+      
+      </div>
+    </form>

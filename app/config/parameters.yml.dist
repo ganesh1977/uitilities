@@ -1,0 +1,34 @@
+# This file is a "template" of what your parameters.yml file should look like
+# Set parameters here that may be different on each deployment target of the app, e.g. development, staging, production.
+# http://symfony.com/doc/current/best_practices/configuration.html#infrastructure-related-configuration
+parameters:
+    database_host:     pri-scan-slo.atcomres.sml.abs
+    database_port:     1521
+    database_name:     ATCOMRES
+    database_user:     ATCOMREAD
+    database_password: ~
+    database_servicename: PRMPROD.datahub
+
+    database_host_uat:        ~
+    database_user_uat:        ~
+    database_password_uat:    ~
+    database_servicename_uat: ~
+
+    database_host_local: localhost
+    database_port_local: 3306
+    database_name_local: sym_utils
+    database_user_local: utils
+    database_password_local: ~
+
+    # You should uncomment this if you want use pdo_sqlite
+    # database_path: "%kernel.root_dir%/data.db3"
+
+    mailer_user:       AKIAJKBTPBYSKBK3KQ2A
+    mailer_password:   ~
+
+    # A secret key that's used to generate certain security-related tokens
+    secret:            2705e69ca72e6994a450fc02c6e1e6cbc7feb653
+
+    jms_serializer.camel_case_naming_strategy.class: JMS\Serializer\Naming\IdenticalPropertyNamingStrategy
+    
+    avlabl_directory: '%kernel.root_dir%/../web/uploads/avlabl'

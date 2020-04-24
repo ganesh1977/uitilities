@@ -1,0 +1,78 @@
+{% if search|length %}
+    {% if search.EUR_Cur is defined %}
+        {% set EUR_Cur = 1 %}
+    {% else %}
+        {% set EUR_Cur = 0 %}
+    {% endif %}
+{% endif %}
+<style>
+    .excelBtn { width: 195px !important; }
+</style>
+
+<form action="{{ path('yield_transport') }}" id="form_get" method="GET">
+    <div class="row">
+        <div class="col-sm-4 col-md-2">
+            <div class="form-group">
+                <label for="brandSelect">Brand</label>
+                <select class="form-control" id="brandSelect" name="prom_cd">
+                    {#<option value="all" {% if search|length and search.prom_cd == '' %}selected{% endif %}>All</option>#}
+                    <option value="bt" {% if search|length and search.prom_cd == 'bt' %}selected{% endif %}>Bravo Tours</option>
+                    <option value="sr" {% if search|length and search.prom_cd == 'sr' %}selected{% endif %}>Solresor</option>
+                    <option value="lm" {% if search|length and search.prom_cd == 'lm' %}selected{% endif %}>Matkavekka</option>
+                    <option value="so" {% if search|length and search.prom_cd == 'so' %}selected{% endif %}>Solia</option>
+                    <option value="hf" {% if search|length and search.prom_cd == 'hf' %}selected{% endif %}>Heimsferdir</option>
+                    <option value="st" {% if search|length and search.prom_cd == 'st' %}selected{% endif %}>Sun Tours</option>
+                    <option value="uk" {% if search|length and search.prom_cd == 'uk' %}selected{% endif %}>Primera Holidays UK</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4">
+            <div class="form-group">
+                <label>Departure &amp; Arrival</label>
+                <div class="input-group">
+                    <input type="text" name="dep_cd" id="inputDepCd" class="form-control" value="{% if search|length %}{{ search.dep_cd }}{% endif %}" style="text-transform:uppercase;">
+                    <div class="input-group-addon">to</div>
+                    <input type="text" name="arr_cd" id="inputArrCd" class="form-control" value="{% if search|length %}{{ search.arr_cd }}{% endif %}" style="text-transform:uppercase;">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}" >
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-sm-4">
+            <div class="form-group">
+                <label for="inputHeadCd">Head Cd</label>
+                <input type="text" name="head_cd" id="inputHeadCd" class="form-control" value="{% if search|length %}{{ search.head_cd }}{% endif %}" style="text-transform:uppercase;">
+            </div>
+        </div>
+        <div class="col-sm-4 col-md-4">
+            <div class="form-group required">
+                <label>Travel Dates</label>
+                <div class="input-group input-daterange">
+                    <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}" required>
+                    <div class="input-group-addon">to</div>
+                    <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="end_dt" value="{% if search|length %}{{ search.end_dt }}{% else %}{{ 'now'|date_modify('+7 days')|date('d-M-Y') }}{% endif %}" required>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4 col-md-2">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-primary btn-block">Apply</button>
+        </div>
+        <div class="form-check col-sm-4 col-md-4">
+            <label class="form-check-label">
+                <input class="form-check-input" type="checkbox" name="EUR_Cur" value="1"{% if search.EUR_Cur is defined and search.EUR_Cur is not empty %} checked {% endif %} id="EUR_Cur"> Convert to Euro
+            </label>
+        </div>
+    </div>
+</form>
+{% if transData is defined and transData|length > 0 %}
+    <div class="row">
+        <div class="col-sm-4 col-md-2 offset-md-10">
+            <input type="submit" id="excel_btn" name="excel_download" style="background-color:green;" value="Export" class="btn btn-block btn-primary newbt">
+        </div>
+    </div>
+    <br>
+{% endif %}
+
+<div class="col-12">
+    <p><small>Choose departure and arrival airports <em>or</em> transport header code (not both).</small></p>
+</div>

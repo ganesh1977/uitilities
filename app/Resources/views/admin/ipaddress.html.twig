@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+{% form_theme form 'bootstrap_3_layout.html.twig' %}
+
+{% block body %}
+  <div class="container-fluid">
+  	<h1>IP address table</h1>
+  	<p class="lead">Save IP addresses and let users test if their IP address is whitelisted.</p>
+
+    {% for alert in alerts %}
+      <div class="alert alert-{{ alert[0] }}" role="alert">
+        {{ alert[1]|raw }}
+      </div>
+    {% endfor %}
+  
+    {{ form_start(form) }}
+    {{ form_widget(form) }}
+    {{ form_end(form) }}
+  
+    <hr>
+  
+    <h3>Current IP addresses in database</h3>
+
+  	<table id="ipaddresses" class="table table-striped" cellspacing="0" width="100%">
+      <thead>
+        <tr>
+          <th>IP address</th>
+          <th>Active</th>
+          <th>Description</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ip in whitelisted_ips %}
+          <tr>
+            <td>{{ ip.ipAddress }}</td>
+            <td>{% if ip.active %}Yes{% else %}No{% endif %}</td>
+            <td>{{ ip.description }}</td>
+            <td><a href="{{ path('admin_ip', {'id': ip.id}) }}" class="btn btn-secondary btn-sm">Edit</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>    
+    </table>
+
+  </div>
+{% endblock %}

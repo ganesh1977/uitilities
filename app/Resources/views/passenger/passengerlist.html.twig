@@ -1,0 +1,362 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Passengers List{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  {{ datatable_css|raw }}
+  <style type="text/css">
+    .dt-buttons{
+      position:relative;
+      text-align:center;
+    }
+    .buttons-excel{
+      background-color: green;
+      border:none;
+      color:white;
+      top:-140px;
+      width:180px;
+      padding:7px;
+      border-radius:0.1cm;
+      position:relative;
+    }
+    #extraexport_filter, #results_filter{
+    margin-top:-72px;
+    }
+    #pdf form {
+      display:none;
+    }
+     #results, #extraexport {
+        font-size: 0.85em;
+      }
+    .middle_icon {
+      top:50%;
+      position: absolute;
+      transform: translate(0, -50%)
+    }
+    .hide {
+    display: none;
+    }
+
+    .display_content {
+        display: block;
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+    <div class="header">
+      <h1>Passenger List</h1>
+    </div>
+    <hr>
+
+{% if search.ssr is defined %}
+        {% set ssr = 1 %}
+      {% else %}
+        {% set ssr = 0 %}
+      {% endif %}
+
+      {% if search.extraformat is defined and search.extraformat is not empty %}
+              {% set extraformat = 1 %}
+            {% else %}
+              {% set extraformat = 0 %}
+            {% endif %}
+    <form action="{{ path('passenger_list') }}" id="searchForm" method="GET" style="margin-bottom:50px;">
+        <div class="row">
+            <div class="col-sm-6 col-md-2">
+              <div class="form-group ">
+                <label for="inputAirport">Dep. airport</label>
+                <input type="text" name="dep_cd"  id="inputAirport" class="form-control" value="{% if search|length %}{{ search.dep_cd }}{% endif %}" style="text-transform:uppercase;">
+              </div>
+            </div>
+               <div class="col-sm-6 col-md-2">
+                <div class="form-group ">
+                  <label for="inputAirport">Arr. airport</label>
+                  <input type="text" name="arr_cd"  id="inputAirport" class="form-control" value="{% if search|length %}{{ search.arr_cd }}{% endif %}" style="text-transform:uppercase;">
+                </div>
+            </div>
+               <div class="col-sm-6 col-md-2">
+              <div class="form-group">
+                <label for="inputAirport">Carrier Code</label>
+                <input type="text" name="car_cd"  class="form-control" value="{% if search|length %}{{ search.car_cd }}{% endif %}" style="text-transform:uppercase;">
+              </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 col-md-4">
+                <div class="form-group required">
+                  <label>Dates</label>
+                  <div class="input-group input-daterange">
+                      <input type="text" class="form-control disableAutoComplete" id="startFromInput" name="start_from" value="{% if search|length %}{{ search.start_from }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}" required>
+                      <div class="input-group-addon">to</div>
+                      <input type="text" class="form-control disableAutoComplete" id="endToInput" name="end_to" value="{% if search|length %}{{ search.end_to }}{% else %}{{ 'now'|date_modify('+14 days')|date('d-M-Y') }}{% endif %}" required>
+                  </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-md-2">
+                <div class="form-group">
+                    <label class="form-check-label" style="margin-top:38px;" >
+                      <input class="form-check-input" type="checkbox" name="ssr" id="ssr" value="1"{% if ssr == 1 %} checked{% endif %}> Show SSR
+                    </label>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <div class="form-group">
+                    <label class="form-check-label" style="margin-top:38px;" >
+                      <input class="form-check-input" type="checkbox" name="extraformat" id="extraformat" value="1"{% if extraformat == 1 %} checked{% endif %}> Extra Format
+                    </label>
+                </div>
+            </div>
+        </div>
+        <table width="70%">
+            <tr>
+                <td>
+                    <div class="row">
+                        <div class="col-sm-6 col-md-2">
+                           <div class="form-group">
+                             <label>&nbsp;</label>
+                             <button type="submit"  style="width:180px;" class="btn btn-block btn-primary">Apply</button>
+                           </div>
+                         </div>
+
+                     </div>
+                 </form>
+                </td>
+                <td>
+                    {% if results is defined and results is not empty %}
+                      <div class="row">
+                          <div class="col-sm-6 col-md-2">
+                            {% set search_local = search|merge({'excel':'download'}) %}
+                            {#<a href="{{ path('passenger_list', search_local) }}"  style="align:right;margin-top:14px;width:180px;background-color:green;" class="btn btn-block btn-primary">Export</a>#}
+                          </div>
+                        </div>
+                    {% endif%}
+
+                </td></tr>
+        </table>
+</div>
+
+  {% if results is defined and results is not empty %}
+      <table id="results" class="table table-bordered table-sm" cellspacing="0" width="100%">
+          <thead>
+          <tr>
+              <th>Carrier</th>
+              <th>Code</th>
+              <th>Dep. airport</th>
+              <th>Arr. airport</th>
+              <th>Route</th>
+              <th>Start Date</th>
+              <th>Reservation Id</th>
+              <th>Family Name</th>
+              <th>First Name</th>
+              <th>Title</th>
+              <th>Gender</th>
+              <th>Age</th>
+              {% if search.ssr is defined %}
+                    {% if search.ssr == 1 %}
+                      <th>SSR1</th>
+                      <th>SSR2</th>
+                      <th>SSR3</th>
+                      <th>SSR4</th>
+                      <th>SSR5</th>
+                    {% endif%}
+              {% endif%}
+          </tr>
+          </thead>
+          <tbody>
+          {% for res in results %}
+                          <tr>
+                              <td>{{ res.CARRIER }} </td>
+                              <td>{{ res.CODE }} </td>
+                              <td>{{ res.DEP_PT }} </td>
+                              <td>{{ res.ARR_PT }} </td>
+                              <td>{{ res.ROUTE_NUM }} </td>
+                              <td>{{ res.ST_DT }} </td>
+                              <td>{{ res.RES_ID }} </td>
+                              <td>{{ res.SURNAME }} </td>
+                              <td>{{ res.FORENAME }} </td>
+                              <td>{{ res.TITLE }} </td>
+                              <td>{{ res.GENDER }} </td>
+                              <td>{{ res.AGE }} </td>
+                              {% if search.ssr is defined %}
+                                {% if search.ssr == 1 %}
+                                <td>{{ res.SSR0}}</td>
+                                <td>{{ res.SSR1}}</td>
+                                <td>{{ res.SSR2}}</td>
+                                <td>{{ res.SSR3}}</td>
+                                <td>{{ res.SSR4}}</td>
+                                {% endif %}
+                              {% endif%}
+                          </tr>
+                  {% endfor %}
+          </tbody>
+      </table>
+    <div class="container-fluid">
+    </div>
+    <script type="text/javascript">var num_results = {% if results is defined and results is not empty %}{{ results|length }}{% endif %}</script>
+  {% endif %}
+  
+  {% if resultext is defined and resultext is not empty %}
+      <table id="extraexport" class="table table-bordered table-sm" cellspacing="0" width="100%">
+          <thead>
+          <tr>
+              <th>Title</th>
+              <th>Sur Name</th>
+              <th>Given Name</th>
+              <th>Pax Type</th>
+              <th>Date Of Birth</th>
+              <th>Compartment</th>
+              <th>Linked RPH</th>
+              <th>Middle Name</th>
+              <th>Gender</th>
+              <th>Citizenship</th>
+              <th>Country Of Birth</th>
+              <th>Phone</th>
+              <th>Fax</th>
+              <th>Doc ID</th>
+              <th>Doc ID Number</th>
+              <th>Doc ID Country</th>
+              <th>Doc ID Expiration</th>
+              <th>Country Of Residence</th>
+              <th>Special Service</th>
+              <th>Address</th>
+              <th>City</th>
+              <th>Postal Code</th>
+              <th>Sub Country</th>
+              <th>Redress Number</th>
+              <th>Known Traveller Number</th>
+              <th>Client Booking ID</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for res in resultext %}
+                          <tr>
+                              <td>{{ res.TITLE }} </td>
+                              <td>{{ res.SURNAME }} </td>
+                              <td>{{ res.FORENAME }} </td>
+                              <td>{{ res.PAX_TP }} </td>
+                              <td>{{ res.DT_BIRTH }} </td>
+                              <td>{{ res.COMPARTMENT }} </td>
+                              <td>{{ res.LINKEDRPH }} </td>
+                              <td>{{ res.MIDDLE_NAME }} </td>
+                              <td>{{ res.GENDER }} </td>
+                              <td>{{ res.CITIZENSHIP }} </td>
+                              <td>{{ res.COB }} </td>
+                              <td>{{ res.PHONE }} </td>
+                              <td>{{ res.FAX }} </td>
+                              <td>{{ res.DOCID }} </td>
+                              <td>{{ res.DOCIDNUM }} </td>
+                              <td>{{ res.DOCIDCOUNTRY }} </td>
+                              <td>{{ res.DOCIDEXP }} </td>
+                              <td>{{ res.COUNTRYOFRESIDENCE }} </td>
+                              <td>{{ res.SPECIALSERVICE }} </td>
+                              <td>{{ res.ADDR }} </td>
+                              <td>{{ res.CITY }} </td>
+                              <td>{{ res.POSTALCD }} </td>
+                              <td>{{ res.SUBCOUNTRY }} </td>
+                              <td>{{ res.REDRESSNUMBER }} </td>
+                              <td>{{ res.KNOWNTRANUM }} </td>
+                              <td>{{ res.BOOKINGID }} </td>
+                            </tr>
+                  {% endfor %}
+          </tbody>
+      </table>
+    <div class="container-fluid">
+    </div>
+    <script type="text/javascript">var num_results =   {% if resultext is defined and resultext is not empty %}
+ {{ resultext|length }}{% endif %}</script>
+  {% endif %}
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+  <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.4/js/dataTables.buttons.min.js"></script>
+  <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.4/js/buttons.html5.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+
+
+  <script type="text/javascript">
+  $(document).ready(function(){
+      $('#extraformat').click(function(){
+          if($('#extraformat').is(":checked")){
+             uncheck();
+          }
+          else if($(this).is(":not(:checked)")){
+              check();
+          }
+      });
+  });
+
+      if($('#extraformat').is(":checked") && $('#extraformat').val() == '1'){
+      uncheck();
+      }else{
+      check();
+      }
+      function uncheck() {
+       document.getElementById("ssr").disabled = true;
+     }
+     function check() {
+      document.getElementById("ssr").disabled = false;
+    }
+    var jsonData = {};
+
+    $(document).ready(function() {
+     var table = $('#results').DataTable({
+           dom: 'lBfrtip',
+           buttons: [
+               {
+                   extend: 'excelHtml5',
+                   filename: 'Passenger Report',
+                   title:null,
+                   text:'Export',
+                   sheetName: 'Passenger Report'
+
+               }
+           ],
+          "lengthMenu": [[500,100,50,25,10, -1], [500,100,50,25,10, "All"]],
+      });
+      $("#extraexport").DataTable({
+          dom: 'lBfrtip',
+          buttons: [
+              {
+                  extend: 'excelHtml5',
+                  filename: 'Passenger List Extra Format',
+                  title: null,
+                  text:'Export',
+                  sheetName: 'Passenger List Extra Format'
+
+              }
+          ]
+      });
+
+      $('#startFromInput').val(param('start_from'));
+      $('#endToInput').val(param('end_to'));
+
+      var datepicker_options = {
+        format: 'dd-M-yyyy',
+        weekStart: 1,
+        clearBtn: true,
+        autoclose: true
+      };
+
+      $('#startFromInput').datepicker(datepicker_options).on('changeDate', function (ev) {
+        $("#endToInput").datepicker('setStartDate', ev.date);
+        if ($("#endToInput").datepicker('getDate') < ev.date) {
+          $("#endToInput").datepicker('setDate', ev.date);
+        }
+        $("#endToInput").focus();
+      });
+      $('#endToInput').datepicker(datepicker_options);
+
+      function param(name) {
+      return (location.search.split(name + '=')[1] || '').split('&')[0];
+    }
+    });
+
+  </script>
+
+{% endblock %}

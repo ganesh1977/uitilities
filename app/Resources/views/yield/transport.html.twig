@@ -1,0 +1,406 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Transport profit and loss{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+    <style>
+        #transport {
+            font-size: 0.8em;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="header">
+            <h1>Transport profit and loss</h1>
+            <p class="lead">Add your search parameters, click apply and browse transport information.</p>
+        </div>
+
+        {% block search_form %}
+            {% include "yield/transportsearch.html.twig" %}
+        {% endblock %}
+    </div>
+    {% if transData is defined %}
+        <form action="{{ path('yield_transport_excel')}}" method="POST" id="form_input">
+            <table id="transport" class="table table-sm table-striped" width="100%">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Date</th>
+                        <th>Ext/Int</th>
+                        <th>Route</th>
+                        <th>Dep</th>  
+                        <th>Arr</th>	
+                        <th>Time</th>	
+                        <th>Flight</th>
+                        <th>Max Qty</th>
+                        <th>Qty</th>                            
+                        <th>Opt</th>
+                        <th>Bkd</th>
+                        <th>Man</th>
+                        <th>Rem</th>
+                        <th>Total</th>
+                        <th>Add Sales</th>
+                        <th>Total Sales</th>			
+                        <th>Cost Per Seat ({{ Curr_Cd }})</th>
+                        <th>Flight Cost ({{ Curr_Cd }})</th>
+                        <th>GC Per Client</th>
+                        <th>Sales Price ({{ Curr_Cd }})</th>		
+                        <th>Sales ({{ Curr_Cd }})</th>
+                        <th>Breakeven</th>
+                        <th>Profit/Loss ({{ Curr_Cd }})</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% set cnt = 1 %}
+                    {% for result in transData %}  		
+                        <tr >
+                            <td>
+                                <input type="hidden" name="startDate" value="{{ startDate }}" class="startdate">
+                                <input type="hidden" name="endDate" value="{{ endDate }}" class="endDate">
+                                <input type="hidden" name="Day[]" value="{{result.Day }}">{{result.Day | capitalize }}
+                            </td>
+                            <td>
+                                <input type="hidden" name="Date[]" value="{{result.Date }}">{{result.Date }}
+                            </td>
+                            <td>
+                                <input type="hidden" name="SALE_STS[]" value="{{result.Sale_Sts }}">{{result.Sale_Sts }}
+                            </td>
+                            <td>
+                                <input type="hidden" name="Route[]" value="{{result.Route }}">{{result.Route }}
+                            </td>
+                            <td>
+                                <input type="hidden" name="Dep[]" value="{{result.Dep }}">{{result.Dep }}
+                            </td>			
+                            <td>
+                                <input type="hidden" name="arr[]" value="{{result.Arr }}">{{result.Arr }}
+                            </td>	
+                            <td>
+                                <input type="hidden" name="Time[]" value="{{result.Time}}">{{result.Time}}
+                            </td> 	
+                            <td>
+                                <input type="hidden" name="flight[]" value="{{result.Flight}}">{{result.Flight}}
+                            </td>	    
+                            <td>
+                                <input type="hidden" name="MAX_QTY[]" value="{{ result.Max_Qty }}"> {{ result.Max_Qty }}
+                            </td>
+                            <td>
+                                <input type="hidden" name="QTY[]" value="{{result.Qty}}">{{result.Qty}}
+                            </td>
+                            <td>
+                                <input type="hidden" name="OPT[]" value="{{result.Opt}}">{{result.Opt}}
+                            </td>
+                            <td>
+                                <input type="hidden" name="BKD[]" value="{{result.Bkd}}">{{result.Bkd}}
+                            </td>
+                            <td>
+                                <input type="hidden" name="MAN_SEATS[]" value="{{ result.Man_Seats }}">{{result.Man_Seats}}
+                            </td>
+                            <td>
+                                <input type="hidden" name="REM[]" value="{{ result.Rem }}">{{ result.Rem }}
+                            </td>
+                            <td>
+                                <input type="hidden" id="total" class="total_{{ cnt }}" name="total[]" p="{{cnt}}" value="{{ result.Total }}">{{ result.Total }}
+                            </td>
+                            <td>
+                                <input type="text" class="Addsales{{cnt}} textbox" id="Addsales" style="width:42px;" name="Addsales[]" p="{{cnt}}" value="">
+                            </td>
+                            <td>
+                                <input type="hidden" class="total_c textbox total_c{{cnt}}" name="add_total_sales[]" p="{{cnt}}" value="{{ result.Total_Sales }}">
+                                <span class="total_cc{{cnt}}">{{ result.Total_Sales }}</span>
+                            </td>			
+                            <td>
+                                <input type="hidden" name="cost_prc[]" value='{{ result.Cost_per_Seat }}' class="cost_prc{{cnt}}">{{ result.Cost_per_Seat }}
+                            </td>
+                            <td>
+                                <input name="flighCost[]" type="hidden" name="flighCost[]" class="flighCost_c{{cnt}}" value="{{ result.Flight_Cost }}">{{ result.Flight_Cost }}
+                            </td>
+                            <td>
+                                <input type="text" class='textbox per_client{{cnt}}' id="per_client" pc="{{cnt}}" style="width:42px;" name="per_client[]" value="">
+                            </td>
+                            <td>
+                                <input type="hidden" name="sPrice[]" value="{{ result.Sales_Price }}" class="sPrice{{cnt}}">
+                                <span class='sPrice_c{{cnt}}'>{{ result.Sales_Price }}</span>
+                            </td>		
+                            <td>
+                                <input type="hidden" class="Sales{{cnt}}" name="Sales[]" value="{{ result.Sales }}">
+                                <span class="Sales_c{{cnt}}">{{ result.Sales }}</span>
+                            </td>
+                            <td>
+                                <input type="hidden" class="BreakEven{{cnt}}" name="breakEven[]" value="{{ result.Breakeven }}">
+                                <span class="BreakEven_c{{cnt}}">{{ result.Breakeven }}</span>
+                            </td>
+                            <td>
+                                <input type="hidden" class="pl{{cnt}} profitLoss" name="profitLoss[]" value="{{ result.PL }}">
+                                <span class="pl_c{{cnt}}">{{ result.PL }}</span>	
+                            </td>
+                        </tr>
+                        {% set cnt = cnt + 1 %}      
+                    {% endfor %}
+
+                </tbody>
+                <tfoot>
+                    <tr style="font-style:italic; font-weight:bold;">
+                        <td>Total</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <input type="hidden" value="" name="grandTotal" class="grandTotal">
+                            <span class="grandTotal_c" style="font-weight:bold;"></span>
+                        </td>
+                    </tr> 
+                </tfoot>
+            </table>
+        </form>
+    {% endif %}
+
+{% endblock %}
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script src="{{ asset('assets/js/jquery.number.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+    {#<script type="text/javascript" src="{{ asset('assets/js/dataTables.buttons.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/jszip.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/buttons.html5.min.js') }}"></script>#}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#transport').on('keyup', '#Addsales', function () {
+                var attp = $(this).attr("p");
+                var addSaleVal = $(this).val();
+                var totalColVal = $(".total_" + attp).val();
+                var sum = '';
+                sum = parseInt(totalColVal) + 0;
+                if (addSaleVal) {
+                    sum = parseInt(addSaleVal) + parseInt(totalColVal);
+                }
+                var sales = '';
+                var profitloss = '';
+
+                $(".total_c" + attp).val(sum);
+                $(".total_cc" + attp).text(sum);
+
+                //To avoid NaN error
+                var salesTotal = $(".total_c" + attp).val();
+                if (isNaN(salesTotal)) {
+                    $(".total_c" + attp).val('');
+                }
+                var total_c = $(".total_c" + attp).val();
+                var sPrice = $(".sPrice" + attp).val();
+
+                //Checking if GC per Client value is entered and to re-calculate 'Sales' and 'Profit/Loss'
+                var GcPClient = $('.per_client' + attp).val();
+                var fCostValue_p_l = $(".flighCost_c" + attp).val();
+                var Sales_p_l = $(".Sales" + attp).val();
+                sales = parseInt(total_c) * parseInt(sPrice);
+                profitloss = CalculatePL(sales, fCostValue_p_l);
+
+                $(".Sales" + attp).val(sales);
+                $(".Sales_c" + attp).text(sales);
+                $(".pl" + attp).val(profitloss);
+                $(".pl_c" + attp).text(profitloss);
+
+                calculateGrandTotal();
+            });
+
+            $('#transport').on('keyup', '#per_client', function () {
+                var attpc = $(this).attr("pc");
+                var gcClient = $(this).val();
+                var cosprc = $(".cost_prc" + attpc).val();
+                var salesPrice = $(".sPrice" + attpc).val();
+                var cTotal = '';
+                cTotal = parseInt(cosprc) + 0;
+                if (gcClient) {
+                    cTotal = parseInt(cosprc) + parseInt(gcClient);
+                }
+                var total_c = $(".total_c" + attpc).val();
+
+                var totall = $(".total_" + attpc).val();
+                $(".sPrice" + attpc).val(cTotal);
+                $(".sPrice_c" + attpc).text(cTotal);
+
+                var sPrice = $(".sPrice" + attpc).val();
+                if (isNaN(sPrice)) {
+                    $(".sPrice" + attpc).val('');
+                    $(".sPrice_c" + attpc).text('');
+                }
+
+                var SalesVal = parseInt(total_c) * parseInt(sPrice);
+                $(".Sales" + attpc).val(SalesVal);
+                $(".Sales_c" + attpc).text(SalesVal);
+
+                var salesVal = $(".Sales" + attpc).val();
+                if (isNaN(SalesVal)) {
+                    $(".Sales" + attpc).val('');
+                    $(".Sales_c" + attpc).text('');
+                }
+
+                var fCostValue = $(".flighCost_c" + attpc).val();
+                var ssPrice = $(".sPrice" + attpc).val();
+                var BreakEvenVal = parseInt(fCostValue) / parseInt(sPrice);
+
+                if ((BreakEvenVal) && (!isNaN(BreakEvenVal))) {
+                    var BreakEvenValDecimal = BreakEvenVal.toFixed(0);
+                    $(".BreakEven" + attpc).val(BreakEvenValDecimal);
+                    $(".BreakEven_c" + attpc).text(BreakEvenValDecimal);
+                } else
+                {
+                    $(".BreakEven" + attpc).val('');
+                    $(".BreakEven_c" + attpc).text('');
+                }
+
+                var fCostValue_p_l = $(".flighCost_c" + attpc).val();
+                var Sales_p_l = $(".Sales" + attpc).val();
+
+                var PL = CalculatePL(parseInt(Sales_p_l), parseInt(fCostValue_p_l));
+
+                $(".pl" + attpc).val(PL);
+                $(".pl_c" + attpc).text(PL);
+
+                var profitLoss = $(".pl" + attpc).val();
+                if (isNaN(profitLoss)) {
+                    $(".pl" + attpc).val('');
+                }
+
+                calculateGrandTotal();
+            });
+
+            //To get grand Total value
+            function calculateGrandTotal() {
+                var cnt = 1;
+                var gtotal = 0;
+                $(".profitLoss").each(function (key, value)
+                {
+                    var gTot = $(".pl" + cnt).val();
+                    if (gTot != '')
+                    {
+                        gtotal = parseInt(gtotal) + parseInt(gTot);
+                    }
+                    cnt = cnt + 1;
+                });
+
+                $(".grandTotal").val(gtotal);
+                $(".grandTotal_c").text(gtotal);
+            }
+
+            calculateGrandTotal();
+            //Profit/Loss calculation function
+            function CalculatePL(Sales, FlightPCost) {
+                return Sales - FlightPCost;
+            }
+
+            var datepicker_options = {
+                format: 'dd-M-yyyy',
+                autoclose: true,
+                weekStart: 1
+            };
+
+            /*$('#fromDateInput').datepicker(datepicker_options).on('changeDate', function (ev) {
+             $("#toDateInput").datepicker('setStartDate', ev.date);
+             if ($("#toDateInput").datepicker('getDate') < ev.date) {
+             $("#toDateInput").datepicker('setDate', ev.date);
+             }
+             $("#toDateInput").focus();
+             });
+             $('#toDateInput').datepicker(datepicker_options);*/
+
+            var EURCur = $('#EUR_Cur').is(":checked");
+            var EURCur_val = '';
+            if (EURCur == true)
+            {
+                EURCur_val = '1';
+            }
+
+            var dt = '';
+            $("#fromDateInput").keyup(function () {
+                dt = $('#fromDateInput').val();
+            });
+            $("#toDateInput").keyup(function () {
+                dt = $('#toDateInput').val();
+            });
+
+            $('#fromDateInput').datepicker(datepicker_options);
+            $('#toDateInput').datepicker(datepicker_options);
+
+            $('#fromDateInput').blur(function ()
+            {
+                var id = '#fromDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $('#toDateInput').blur(function ()
+            {
+                var id = '#toDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $(".select").on("click", function () {
+                if (!$(this).prop("checked")) {
+                    $(".transport").prop("checked", false);
+                    $(".select").prop("checked", false);
+                }
+            });
+
+            $(".select").on("click", function () {
+                if ($(this).prop("checked")) {
+                    $(".transport").prop("checked", true);
+                    $(".select").prop("checked", true);
+                }
+            });
+        });
+
+        var table = $('#transport').DataTable({
+            bPaginate: false,
+            bFilter: false,
+            bAutoWidth: false,
+            stateSave: false,
+            ordering: false,
+            {#dom: 'Bfrtip',
+            buttons: [
+                {
+                    visibility: 'hidden',
+                    extend: 'excelHtml5',
+                    filename: 'Transport profit and loss',
+                    title: null,
+                    text: 'Export',
+                    sheetName: 'Transport PL'
+                }
+            ]#}
+        });
+
+        {#$("#excel_btn").on("click", function () {
+            table.button('.buttons-excel').trigger();
+        });#}
+
+        $('#excel_btn').click(function () {
+            $('#form_input').submit();
+        });
+    </script>
+{% endblock %}

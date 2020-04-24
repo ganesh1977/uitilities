@@ -1,0 +1,562 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Status{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  <style>
+  #inventory {
+    font-size: 0.85em;
+  }
+  .prettyprinted {
+    font-size: 0.7em!important;
+  }
+  #reservations, #accomPrice, #priceDefinition {
+    font-size: 0.85em;
+    overflow:scroll;
+  }
+  </style>
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+
+    <h1>Status <small>alpha</small></h1>
+    <p class="lead">Use this tool to check for the usual suspects as to why an accommodation is not showing.</p>
+
+    <hr>
+
+    {% block search_form %}
+      {% include "status/formular.html.twig" %}
+    {% endblock %}
+
+    {% if status is not empty %}
+      <hr>
+
+      {% set success = '<span class="badge badge-success pull-right">Successful</span>' %}
+      {% set warning = '<span class="badge badge-warning pull-right">Warning</span>' %}
+      {% set danger  = '<span class="badge badge-danger pull-right">Failed</span>' %}
+
+      <div class="row">
+
+        <div class="col-md-6">
+
+            {% if status.missingDatesData|length > 0 %}
+                <div class="alert alert-danger">
+                    <h4>Missing dates!</h4>
+                    <p>Some dates were missing from the dataset. The allotment table might contain errors.</p>
+                    <details>
+                        <summary>See details</summary>
+                        <strong>Missing Dates</strong><br />
+                        <div>
+                        {% for idx, error in status.missingDatesData %}
+                            {{ idx }} => {{ error }}<br />
+                        {% endfor %}
+                        <hr />
+                        <strong>Total Inventory Matrix</strong><br />
+                        {% for invDt, invDatesLookAhead in status.invDateMatrix %}
+                            <em>{{ invDt }}</em><br />
+                            {% for invPeriodDt in invDatesLookAhead %}
+                                &emsp;{{ invPeriodDt }}<br />
+                            {% endfor %}
+                            <br />
+                        {% endfor %}
+                        </div>
+                    </details>
+                </div>
+            {% endif %}
+
+          <div class="card">
+            <h3 class="card-header">Accommodation <small><small>({{ status.accommodation.names.accommodation }})</small></small></h3>
+
+            {% if status.accommodation.inventory.loaded %}
+
+              <div class="card-block">
+                <h5 class="card-title">Units available</h5>
+                <p class="card-text">
+                  {% if status.accommodation.master_accom_cd %}
+                    Using inventory from <a style="color:#306aaa;" href="{{ path('status', search|merge({'accom_cd':status.accommodation.master_accom_cd})) }}">{{ status.accommodation.master_accom_cd }}</a>.
+                  {% elseif status.accommodation.no_sharer %}
+                    {{ danger|raw }}
+                    No sharer is setup for accommodation!
+                  {% else %}
+                    {% if status.accommodation.inventory.bookable_units > 0 and status.accommodation.stopsales.stopsale == false %}
+                      {{ success|raw }}
+                    {% else %}
+                      {{ danger|raw }}
+                      {% if status.accommodation.stopsales.stopsale %}
+                          <span class="text-danger">Stop sale!</span>
+                      {% endif %}
+                    {% endif %}
+                      {{ status.accommodation.inventory.bookable_units ?: 0 }} units available ({{ status.accommodation.names.unit }}).
+                  {% endif %}
+                </p>
+              </div>
+
+              <hr style="margin:0">
+
+              <div class="card-block">
+                <h5 class="card-title">Stop sales</h5>
+                <p class="card-text">
+                  {% if status.accommodation.stopsales.stopsale %}
+                    {{ danger|raw }} Stop sales on these dates:<br>
+                    {% for stopsale in status.accommodation.stopsales.stopsales %}
+                      {{ stopsale.st_dt|date('d-M-Y') }} to {{ stopsale.end_dt|date('d-M-Y') }}
+                      {% if stopsale.rm_cd %} on room {{ stopsale.rm_cd }}{% endif %}
+                      {% if stopsale.prom_cd %} for {{ stopsale.prom_cd }}{% endif %}
+                      with <abbr data-toggle="tooltip" data-html="true"
+                    title="{{ stopsale.text }}">text</abbr>.<br>
+                    {% endfor %}
+                  {% else %}
+                    {{ success|raw }} No stopsales found.
+                  {% endif %}
+                </p>
+              </div>
+
+              {% if not status.accommodation.master_accom_cd and not status.accommodation.no_sharer %}
+
+                <hr style="margin:0">
+
+                <div class="card-block">
+                  <h5 class="card-title">Release</h5>
+                  <p class="card-text">
+                    {% if status.accommodation.release.released %}
+                      {{ danger|raw }} Release has been met for these days:<br>
+                      {% for inv_dt,rel_dt in status.accommodation.release.dates %}
+                        {{ inv_dt|date('d-M-Y') }} was released {{ rel_dt|date('d-M-Y H:i') }}<br>
+                      {% endfor %}
+                    {% else %}
+                      {{ success|raw }} Not released until {{ status.accommodation.release.earliest|date('d-M-Y H:i') }}
+                    {% endif %}
+                  </p>
+                </div>
+
+                <hr style="margin:0">
+
+                <div class="card-block">
+                  <h5 class="card-title">Start day</h5>
+                  <p class="card-text">
+                    {% if status.accommodation.inventory.st_day_sts == 'OP' %}
+                      {{ success|raw }} Arrival day {{ search.st_dt|date('d-M-Y') }} is a valid start day.
+                    {% else %}
+                      {{ danger|raw }} Arrival day {{ search.st_dt|date('d-M-Y') }} is not a valid start day.
+                    {% endif %}
+                  </p>
+                </div>
+
+                <hr style="margin:0">
+
+                <div class="card-block">
+                  <h5 class="card-title">Stay</h5>
+                  <p class="card-text">
+                    {% if status.accommodation.stay.valid %}
+                      {{ success|raw }} {{ search.stay }} days is a valid stay length [{{ status.accommodation.stay.min_stay }}-{{ status.accommodation.stay.max_stay }}].
+                    {% else %}
+                      {{ danger|raw }} Stay length has to be between {{ status.accommodation.stay.min_stay }} and {{ status.accommodation.stay.max_stay }} days.
+                    {% endif %}
+                  </p>
+                </div>
+
+                <hr style="margin:0">
+
+                <div class="card-block">
+                  <h5 class="card-title">Allotment status</h5>
+                  <p class="card-text">
+                    {% if status.accommodation.inventory.alt_sts == 'OP' %}
+                      {{ success|raw }} All days of the stay are valid allotment days.
+                    {% else %}
+                      {{ danger|raw }} One or more days are not valid allotment days. See allotment table.
+                    {% endif %}
+                  </p>
+                </div>
+
+                <hr style="margin:0">
+
+                <div class="card-block">
+                  <h5 class="card-title">Allotment table</h5>
+                  <div style="overflow:scroll">
+                    <table id="inventory" class="table table-bordered table-sm" cellspacing="0" width="100%">
+                      <thead>
+                        <tr>
+                          <th></th>
+                          {% for inv_dt in status.accommodation.inventory.table|keys %}
+                            <th>{{ inv_dt|date('j/n') }}</th>
+                          {% endfor %}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Alloc</td>
+                          {% for inv_dt in status.accommodation.inventory.table|keys %}
+                            <td>{{ status.accommodation.inventory.table[inv_dt].alloc }}</td>
+                          {% endfor %}
+                        </tr>
+                        <tr>
+                          <td>Bkd</td>
+                          {% for inv_dt in status.accommodation.inventory.table|keys %}
+                            <td>{{ status.accommodation.inventory.table[inv_dt].bkd }}</td>
+                          {% endfor %}
+                        </tr>
+                        <tr>
+                          <td>Exc Alloc</td>
+                          {% for inv_dt in status.accommodation.inventory.table|keys %}
+                            <td>{% if status.accommodation.inventory.table[inv_dt].exc_alloc is null %}-{% else %}{{ status.accommodation.inventory.table[inv_dt].exc_alloc }}{% endif %}</td>
+                          {% endfor %}
+                        </tr>
+                        <tr>
+                          <td>Exc Bkd</td>
+                          {% for inv_dt in status.accommodation.inventory.table|keys %}
+                            <td>{{ status.accommodation.inventory.table[inv_dt].exc_bkd }}</td>
+                          {% endfor %}
+                        </tr>
+                        <tr>
+                          <td>Theoretical Units</td>
+                          {% set main_warning = 0 %}
+                          {% for inv_dt in status.accommodation.inventory.table|keys %}
+                            <td>{{ status.accommodation.inventory.table[inv_dt].units }}{% if status.accommodation.inventory.table[inv_dt].main_is_lower %}{% set main_warning = 1 %}<span class="text-danger">*</span>{% endif %}</td>
+                          {% endfor %}
+                        </tr>
+                        <tr>
+                            <td>Bookable units</td>
+                            {% for inv_dt in status.accommodation.inventory.table|keys %}
+                                <td>{% if status.accommodation.inventory.table[inv_dt].bookable_units is null %}-{% else %}{{ status.accommodation.inventory.table[inv_dt].bookable_units }}{% endif %}</td>
+                            {% endfor %}
+                        </tr>
+                        {% if not status.accommodation.inventory.alt_sts %}
+                          <tr>
+                            <td>Alt sts</td>
+                            {% for inv_dt in status.accommodation.inventory.table|keys %}
+                              <td>{% if status.accommodation.inventory.table[inv_dt].alt_sts == 'OP' %}<i class="fa fa-check-circle-o text-success" aria-hidden="true"></i>{% else %}<i class="fa fa-ban text-danger" aria-hidden="true"></i>{% endif %}</td>
+                            {% endfor %}
+                          </tr>
+                        {% endif %}
+                      </tbody>
+                    </table>
+                    {% if main_warning %}
+                      <p class="mp-0 text-danger"><small>* units remaining on main level is lower than remaining on sharer level.</small></p>
+                    {% endif %}
+                  </div>
+                </div>
+
+              {% endif %}
+
+            {% else %}
+
+              <div class="card-block">
+                <h5 class="card-title">Allotment</h5>
+                <p class="card-text">
+                  {{ danger|raw }} No inventory found!<br><small>No further accommodation checks are performed!</small>
+                </p>
+              </div>
+
+            {% endif %}
+
+          </div>
+
+        </div>
+
+        <div class="col-md-6">
+          <div class="card">
+            <h3 class="card-header">Flights</h3>
+
+            {% if status.flights.routes|length %}
+
+              {% for route in status.flights.routes %}
+
+                {% if loop.index > 1 %}<hr style="margin:0">{% endif %}
+
+                <div class="card-block">
+                  <h5 class="card-title">
+                    {% if route.out.trans_cd == route.in.trans_cd %}
+                      {{ route.out.trans_cd }}
+                    {% else %}
+                      {{ route.out.trans_cd }} / {{ route.in.trans_cd }}
+                    {% endif %}
+                  </h5>
+                  <p class="card-text">
+                    {% if not route.excluded and route.included %}
+                      {% if route.remain >= (search.n_adu + search.n_chd) and route.inv_remain >= (search.n_adu + search.n_chd) and route.sts == 'ON' %}
+                        {{ success|raw }}
+                      {% else %}
+                        {% if (status.flights.remain >= (search.n_adu + search.n_chd) or status.flights.inv_remain >= (search.n_adu + search.n_chd)) and status.flights.sts == 'ON' %}
+                          {{ warning|raw }}
+                        {% else %}
+                          {{ danger|raw }}
+                        {% endif %}
+                      {% endif %}
+                    {% endif %}
+                    {% if route.out.remain != route.out.inv_remain or route.in.remain != route.in.inv_remain %}
+                      <span title="Outbound">{{ route.out.remain }} <small>({{ route.out.sts }})</small></span>
+                      /
+                      <span title="Inbound">{{ route.in.remain }} <small>({{ route.in.sts }})</small></span>
+                      seats remaining in cache.
+                      <br>
+                      <span title="Outbound">{{ route.out.inv_remain }}</span>
+                      /
+                      <span title="Inbound">{{ route.in.inv_remain }}</span>
+                      seats remaining in inventory.
+                    {% else %}
+                      <span title="Outbound">{{ route.out.remain }} <small>({{ route.out.sts }})</small></span>
+                      /
+                      <span title="Inbound">{{ route.in.remain }} <small>({{ route.in.sts }})</small></span>
+                      seats remaining in cache and inventory.
+                    {% endif %}
+                  </p>
+                  {% if route.excluded or not route.included %}
+                    <p class="card-text">
+                      {{ danger|raw }}
+                      Accommodation is {% if route.excluded %}excluded from {% else %}not included on{% endif %} sell rule.
+                    </p>
+                  {% endif %}
+                </div>
+
+              {% endfor %}
+
+            {% else %}
+
+              <div class="card-block">
+                <h5 class="card-title">No flights found</h5>
+                <p class="card-text">
+                  {{ danger|raw }} No flights servicing this accommodation are found.
+                </p>
+              </div>
+
+            {% endif %}
+
+          </div>
+
+
+
+          <div class="card mt-3">
+            <h3 class="card-header">Build jobs</h3>
+
+              <div class="card-block">
+                  <a  style="color:#306aaa;" href="#" class="small click-to-load-build-jobs">Click to load build jobs</a>
+              </div>
+            <div id="buildjobs"></div>
+          </div>
+        </div>
+
+      </div>
+
+
+
+      <div class="row mt-4">
+
+        <div class="col-md-12">
+
+          <div class="card">
+            <h3 class="card-header">Advanced Search <small><small>(<em>cheapest</em> room for accommodation)</small></small>
+                {% if status.memory_cache.found %}
+                  {{ success|raw }}
+                {% else %}
+                  {{ danger|raw }}
+                {% endif %}
+            </h3>
+
+            <div class="card-block px-0 pt-0">
+              <pre class="prettyprint" class="smaller">{{ status.memory_cache.xml }}</pre>
+            </div>
+
+            <div class="card-footer text-muted" style="overflow-x:hidden;">
+              <small><a style="color:#306aaa;" href="{{ status.memory_cache.link }}" target="_blank">{{ status.memory_cache.link }}</a></small>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <div class="row mt-4">
+
+        <div class="col-md-12">
+
+          <div class="card">
+            <h3 class="card-header">Reservations</h3>
+
+            <div id="collapseReservations">
+              <div class="card-block" id="reservations"><a  style="color:#306aaa;" data-toggle="collapse" href="#collapseReservations" aria-expanded="false" aria-controls="collapseReservations">Click to load reservations!</a></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+
+      {% if app.environment == 'dev' %}
+        <div class="row mt-4">
+
+          <div class="col-md-12">
+
+            <div class="card">
+              <h3 class="card-header">Developer information</h3>
+
+              <div class="card-block" id="devInfo">
+                <h6>AR_SEARCHINCBUILDUNIT</h6>
+                { dump(status.accommodation.searchincbuildunits) }
+                <h6>AR_SEARCHINCBUILDUNIT_HIS</h6>
+                { dump(status.accommodation.searchincbuildunitshis) }
+                <h6>AR_SEARCHINCLUSIVEUNIT</h6>
+                { dump(status.accommodation.searchinclusiveunits) }
+              </div>
+            </div>
+
+          </div>
+        </div>
+      {% endif %}
+
+    {% endif %}
+
+  </div>
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+	<script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+  <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?lang=xml&amp;skin=sunburst&amp;callback=js_ident"></script>
+
+	<script type="text/javascript">
+    $(document).ready(function() {
+    
+
+      $('[data-toggle="tooltip"]').tooltip();
+
+      $('#arrivalDateInput').datepicker(datepicker_options);
+        var dt = '';
+        $("#arrivalDateInput").keyup(function () {
+                        dt = $('#arrivalDateInput').val();
+        });
+
+        $('#arrivalDateInput').datepicker(datepicker_options);
+
+        $('#arrivalDateInput').blur(function ()
+        {
+                        var id = '#arrivalDateInput';
+                        formatDate(id, dt, datepicker_options);
+                        dt = '';
+        });
+
+
+      $('#accomInput').autocomplete({
+        source: '{{ path("ws_accommodations") }}',
+        delay: 500,
+        minLength: 4
+      });
+
+      {% if search|length %}
+
+        $('#collapseReservations').on('show.bs.collapse', function(e) {
+          $('#reservations').html('Loading...');
+          $.post("{{ path('status_reservations') }}", {
+            prom_cd: '{{ search.prom_cd }}',
+            accom_cd: '{{ search.accom_cd }}',
+            rm_cd: '{{ search.rm_cd }}',
+            st_dt: '{{ search.st_dt }}',
+            stay: '{{ search.stay }}',
+          })
+          .done(function( data ) {
+            $('#reservations').html(data);
+          });
+        });
+
+        $('.click-to-load-build-jobs').on('click', function(event)
+        {
+            event.preventDefault();
+            var text = $(this).text();
+            $(this).text('Loading..');
+            $.post('{{ path('status_buildjobs') }}', {
+                prom_cd: '{{ search.prom_cd }}',
+                dep_cd: '{{ search.dep_cd }}',
+                accom_cd: '{{ search.accom_cd }}',
+                rm_cd: '{{ search.rm_cd }}',
+                st_dt: '{{ search.st_dt }}',
+                stay: '{{ search.stay }}',
+                rmGpId: '{{ status.buildjobs.rmGpId }}'
+            }).done(function(data) {
+                $(this).parent().remove();
+                $('#buildjobs').html(data);
+            }.bind(this)).catch(function()
+            {
+                $(this).text(text);
+                alert('Failed to load Build Jobs. Please try again or contact an administrator.');
+            });
+        });
+
+      {% endif %}
+
+		});
+
+    var isDetailsSupported = (function(doc) {
+        var el = doc.createElement('details'),
+            fake,
+            root,
+            diff;
+        if (!('open' in el)) {
+            return false;
+        }
+
+        root = doc.body || (function() {
+            var de = doc.documentElement;
+            fake = true;
+            return de.insertBefore(doc.createElement('body'), de.firstElementChild || de.firstChild);
+        }());
+
+        el.innerHTML = '<summary>a</summary>b';
+        el.style.display = 'block';
+        root.appendChild(el);
+        diff = el.offsetHeight;
+        el.open = true;
+        diff = diff != el.offsetHeight;
+        root.removeChild(el);
+
+        if (fake) {
+            root.parentNode.removeChild(root);
+        }
+
+        return diff;
+
+    }(document));
+
+    if (!isDetailsSupported) {
+        $('body').addClass('no-details');
+        $(document).on('click', 'summary', function(event) {
+            var summary = $(this);
+            var details = summary.parent();
+
+            if (details.attr('open')) {
+                details.removeAttr('open');
+            } else {
+                details.attr('open', 'open');
+            }
+        });
+    }
+
+	</script>
+    <style>
+        .no-details details > * {
+            position: absolute;
+            visibility: hidden;
+        }
+
+        .no-details details > summary,
+        .no-details details[open] > * {
+            position: static;
+            visibility: visible;
+        }
+
+        .no-details details > summary {
+            display: block;
+        }
+        .no-details details > summary:before {
+             content: "►";
+             padding-right: 5px;
+             font-size: 11px;
+        }
+
+        .no-details details[open] > summary:before {
+             content:"▼"
+         }
+    </style>
+{% endblock %}

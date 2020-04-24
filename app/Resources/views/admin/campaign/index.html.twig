@@ -1,0 +1,82 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Deleted Campaigns | Admin{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <nav class="breadcrumb">
+            <span class="breadcrumb-item active">Campaign Administration</span>
+        </nav>
+
+        <div class="header">
+            <h1>Deleted Campaigns</h1>
+            <p class="lead">Restore deleted campaigns</p>
+        </div>
+
+        <hr>
+
+        {% for message in app.flashes('notice') %}
+            <div class="alert alert-warning">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <table id="campaigns" class="table table-striped" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Prom CD</th>
+                    <th>Campaign CD</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Description</th>
+                    <th>Created at</th>
+                    <th>Deleted at</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if campaigns|length == 0 %}
+                    <tr>
+                        <td colspan="8">
+                            <p align="center"><em>No items..</em></p>
+                        </td>
+                    </tr>
+                {% else %}
+                    {% for campaign in campaigns %}
+                        <tr>
+                            <td>{{ campaign.prom_cd }}</td>
+                            <td>{{ campaign.cd }}</td>
+                            <td>{{ campaign.st_dt|date('d-M-Y') }}</td>
+                            <td>{{ campaign.end_dt|date('d-M-Y') }}</td>
+                            <td>{{ campaign.description }}</td>
+                            <td>{{ campaign.created_at|date('d-M-Y') }}</td>
+                            <td>{{ campaign.deleted_at|date('d-M-Y') }}</td>
+                            <td>
+                                <a href="{{ path('campaign_admin_restore', { id: campaign.id }) }}" class="btn btn-success btn-sm">Restore</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script src="{{ asset('assets/js/dataTables.plugin.js') }}"></script>
+    <script>
+        $(document).ready(function()
+        {
+            $('#campaigns').DataTable({
+                order: [6, 'desc']
+            });
+        });
+    </script>
+{% endblock %}

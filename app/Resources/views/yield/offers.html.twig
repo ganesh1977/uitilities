@@ -1,0 +1,182 @@
+{# empty Twig template #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Special Offers{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+    <style>
+        #offers {
+            font-size:0.8em;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid csstransforms">
+        <div class="header">
+            <h1>Accommodation offers</h1>
+            {%if flag %}
+                <p class="lead">Please note: Only offers loaded the last 7 days!</p>
+            {% else %}
+                <p class="lead">Please note: Special offers loaded for the search criteria!</p>
+            {% endif%}
+        </div>
+
+        <hr>
+        {% if exception is defined %}
+            <div class="alert alert-danger" role="alert">
+                <strong>Error!</strong> <em>{{ exception.message }}</em></small>
+            </div>
+        {% endif %}
+
+        <form action="{{ path('yield_offers')}}" method="GET">
+            <div class="row">
+                <div class="col-sm-4 col-md-2">
+                    <div class="form-group">
+                        <label for="inputAirport">Dest. Airport</label>
+                        <input type="text" name="arr_cd" id="inputAirport" class="form-control" value="{% if search|length %}{{ search.arr_cd }}{% endif %}" style="text-transform:uppercase;">
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-2">
+                    <div class="form-group">
+                        <label for="inputAirport">Accom. Code</label>
+                        <input type="text" name="accom_cd" id="inputAccom" class="form-control" value="{% if search|length %}{{ search.accom_cd }}{% endif %}" style="text-transform:uppercase;">
+                    </div>
+                </div>
+                <div class="col-sm-4 col-md-2 col-lg-1">
+                    <div class="form-group">
+                        <label for="inputStay">Stay</label>
+                        <input type="text" title="Stay" name="stay" id="inputStay" class="form-control" value="{% if search|length %}{{ search.stay }}{% endif %}">
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label>Travel Dates</label>
+                        <div class="input-group input-daterange">
+                            <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% endif %}">
+                            <div class="input-group-addon">to</div>
+                            <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="end_dt" value="{% if search|length %}{{ search.end_dt }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-md-3">
+                    <div class="form-group">
+                        <label>Booking Dates</label>
+                        <div class="input-group input-daterange">
+                            <input type="text" class="form-control disableAutoComplete" id="fromBkgDateInput" name="bkg_st_dt" value="{% if search|length %}{{ search.bkg_st_dt }}{% endif %}">
+                            <div class="input-group-addon">to</div>
+                            <input type="text" class="form-control disableAutoComplete" id="toBkgDateInput" name="bkg_end_dt" value="{% if search|length %}{{ search.bkg_end_dt }}{% endif %}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-4 pull-right">
+                    <button type="submit" class="btn btn-block btn-primary button">Apply</button>
+                </div>
+            </div>
+
+        </form>
+        <hr>
+        <table id="offers" class="table table-sm table-striped" cellspacing="0" width="100%">
+            <thead>
+                <tr>
+                    <th>Loaded</th>
+                    <th>Accommodation</th>
+                    <th>Room</th>
+                    <th>Book from</th>
+                    <th>Book to</th>
+                    <th>Name</th>
+                    <th>Details</th>
+                    <th>Stay from</th>
+                    <th>Stay to</th>
+                    <th>Stay</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for offer in offers %}
+                    <tr>
+                        <td data-sort="{{ offer.load_dt_tm|date('U') }}">{{ offer.load_dt_tm|date('d-M-Y @ H:i') }}</td>
+                        <td>{{ offer.accom }}</td>
+                        <td>{{ offer.rm_cd }}</td>
+                        <td data-sort="{{ offer.bk_from|date('U') }}">{{ offer.bk_from|date('d-M-Y') }}</td>
+                        <td data-sort="{{ offer.bk_to|date('U') }}">{{ offer.bk_to|date('d-M-Y') }}</td>
+                        <td>{{ offer.name }}</td>
+                        <td data-sort="{{ offer.details_pct }}">{{ offer.details }}</td>
+                        <td data-sort="{{ offer.st_dt|date('U') }}">{{ offer.st_dt|date('d-M-Y') }}</td>
+                        <td data-sort="{{ offer.end_dt|date('U') }}">{{ offer.end_dt|date('d-M-Y') }}</td>
+                        <td>{{ offer.stay }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endblock %}
+
+    {% block javascripts_footer %}
+        {{ parent() }}
+        {{ datatable_js|raw }}
+        <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var table = $('#offers').DataTable({
+                    'order': [[0, 'desc']]
+                });
+            });
+
+            $(document).ready(function () {
+
+                var dt = '';
+                $("#fromDateInput").keyup(function () {
+                    dt = $('#fromDateInput').val();
+                });
+                $("#toDateInput").keyup(function () {
+                    dt = $('#toDateInput').val();
+                });
+
+                $('#fromDateInput').datepicker(datepicker_options);
+                $('#toDateInput').datepicker(datepicker_options);
+
+                $('#fromDateInput').blur(function ()
+                {
+                    var id = '#fromDateInput';
+                    formatDate(id, dt, datepicker_options);
+                    dt = '';
+                });
+
+                $('#toDateInput').blur(function ()
+                {
+                    var id = '#toDateInput';
+                    formatDate(id, dt, datepicker_options);
+                    dt = '';
+                });
+
+                $("#fromBkgDateInput").keyup(function () {
+                    dt = $('#fromBkgDateInput').val();
+                });
+                $("#toBkgDateInput").keyup(function () {
+                    dt = $('#toBkgDateInput').val();
+                });
+
+                $('#fromBkgDateInput').datepicker(datepicker_options);
+                $('#toBkgDateInput').datepicker(datepicker_options);
+
+                $('#fromBkgDateInput').blur(function ()
+                {
+                    var id = '#fromBkgDateInput';
+                    formatDate(id, dt);
+                    dt = '';
+                });
+
+                $('#toBkgDateInput').blur(function ()
+                {
+                    var id = '#toBkgDateInput';
+                    formatDate(id, dt);
+                    dt = '';
+                });
+
+
+            });
+        </script>
+    </div>
+{% endblock %}

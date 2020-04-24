@@ -1,0 +1,188 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Flight control{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+    <style type="text/css">.emphasize{font-style: italic;}</style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="header">
+            <h1>Flight control</h1>
+            <p class="lead">Check differences between @comRes and Primera Air (Quintessence).</p>
+        </div>
+
+        <hr>
+
+        <form action="{{ path('inventory_flight')}}" method="GET">
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label for="inputAirport">Arrival Airport</label>
+                        <input type="text" name="airport" id="inputAirport" class="form-control" value="{{ airport }}">
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label for="inputDaterange">Dates</label>
+                        <div class="input-group input-daterange">
+                            <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="from" value="{{ from|date('d-M-Y') }}">
+                            <div class="input-group-addon">to</div>
+                            <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="to" value="{{ to|date('d-M-Y') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button type="submit" class="btn btn-block btn-primary">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <hr>
+
+        <p id="loading"><i class="fa fa-spinner fa-spin fa-5x fa-fw"></i><span class="sr-only">Loading...</span></p>
+
+        {% if missing|length > 0 %}
+            <div class="alert alert-danger alert-dismissible fade in" role="alert">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="alert-heading">Flights only in Quintessence!</h4>
+                <ul>
+                    {% for line in missing %}
+                        <li>{{ line }}</li>
+                        {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+
+    <table class="table table-striped" id="flights" cellspacing="0" width="100%" style="display:none">
+        <thead>
+            <tr>
+                <th colspan="6"></th>
+                <th colspan="3">@comRes</th>
+                <th colspan="3">Quintessence</th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>Code</th>
+                <th>Flight</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Departure</th>
+                <th><abbr title="@comRes allotment">Alt</abbr></th>
+                <th><abbr title="@comRes booked">Bkd</abbr></th>
+                <th><abbr title="@comRes available">Avl</abbr></th>
+                <th><abbr title="Quintessence allotment">Alt</abbr></th>
+                <th><abbr title="Quintessense booked">Bkd</abbr></th>
+                <th><abbr title="Synchronized">Sync</abbr></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+                <tr>
+                    <td
+                        {% if flight.SALE_STS == 'OFF' %}
+                            {% set sts_title = ' (OFF sale)' %}
+                            {% set sts_sort = '0_' ~ flight.DIRECTION %}
+                            style="color:#f0ad4e;"
+                            data-search="OFF"
+                        {% else %}
+                            {% set sts_title = '' %}
+                            {% set sts_sort = '1_' ~ flight.DIRECTION %}
+                        {% endif %}
+                        data-order="{{ sts_sort }}"
+                        >
+                        {% if flight.DIRECTION == 'OUT' %}
+                            <i class="fa fa-plane" aria-hidden="true" title="Outbound{{ sts_title }}"></i>
+                        {% else %}
+                            <i class="fa fa-plane fa-flip-vertical" aria-hidden="true" title="Inbound{{ sts_title }}"></i>
+                        {% endif %}
+                    </td>
+                    <td data-search="{{ flight.ROUTE_CD }}">{{ flight.CD }}</td>
+                    <td>{{ flight.FLIGHT_NO }}</td>
+                    <td>{{ flight.DEPARTURE_PT }}</td>
+                    <td>{{ flight.ARRIVAL_PT }}</td>
+                    <td {% if flight.ERROR b-and constant('AppBundle\\Controller\\FlightController::ERR_DEP') or flight.ERROR b-and constant('AppBundle\\Controller\\FlightController::ERR_ARR') %}class="emphasize"{% endif %} data-order="{{ flight.DEPARTURE_DT }}" data-toggle="tooltip" data-placement="top" data-html="true" title="<h6>@comRes</h6><p>LOC TZ: {{ flight.DEPARTURE_DT|date('H:i') }} - {{ flight.ARRIVAL_DT|date('H:i') }}<br>UTC TZ: {{ flight.UTC_DEPARTURE_DT|date('H:i') }} - {{ flight.UTC_ARRIVAL_DT|date('H:i') }}</p><h6>Quintessence</h6><p>LOC TZ: {{ flight.QUINTESSENCE.DEPARTURE_DT|date('H:i') }} - {{ flight.QUINTESSENCE.ARRIVAL_DT|date('H:i') }}<br>UTC TZ: {{ flight.QUINTESSENCE.UTC_DEPARTURE_DT|date('H:i') }} - {{ flight.QUINTESSENCE.UTC_ARRIVAL_DT|date('H:i') }}</p>">{{ flight.DEPARTURE_DT|date('d-M-Y H:i') }}</td>
+                    <td {% if flight.ERROR b-and constant('AppBundle\\Controller\\FlightController::ERR_ALT_MM') %}class="emphasize"{% endif %} data-toggle="tooltip" data-placement="top" data-html="true" title="{{ flight.QUINTESSENCE.ALT_SHARERS }}">{{ flight.ALT }}</td>
+                    <td {% if flight.ERROR b-and constant('AppBundle\\Controller\\FlightController::ERR_BKD_MM') %}class="emphasize"{% endif %} data-toggle="tooltip" data-placement="top" data-html="true" title="{{ flight.QUINTESSENCE.BKD_SHARERS }}">{{ flight.BKD }}</td>
+                    <td>{{ flight.ALT - flight.BKD }}</td>
+                    <td style="border-left:2px solid #eceeef;">{{ flight.QUINTESSENCE.ALT }}</td>
+                    <td>{{ flight.QUINTESSENCE.BKD }}</td>
+                    <td>
+                        {% if flight.QUINTESSENCE.SYNC == 'success' %}
+                            <span class="badge badge-success">OK</span>
+                        {% elseif flight.QUINTESSENCE.SYNC == 'info' %}
+                            <span class="badge badge-info" data-toggle="tooltip" data-placement="left" data-html="true" title="{{ flight.QUINTESSENCE.SYNC_MSGS|join('<br>') }}">INFO</span>
+                        {% elseif flight.QUINTESSENCE.SYNC == 'warning' %}
+                            <span class="badge badge-warning" data-toggle="tooltip" data-placement="left" data-html="true" title="{{ flight.QUINTESSENCE.SYNC_MSGS|join('<br>') }}">WARNING</span>
+                        {% else %}
+                            <span class="badge badge-danger" data-toggle="tooltip" data-placement="left" data-html="true" title="{{ flight.QUINTESSENCE.SYNC_MSGS|join('<br>') }}">ERROR</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#flights').show();
+            $('#loading').hide();
+
+
+            var dt = '';
+            $("#fromDateInput").keyup(function () {
+                dt = $('#fromDateInput').val();
+            });
+            $("#toDateInput").keyup(function () {
+                dt = $('#toDateInput').val();
+            });
+
+            $('#fromDateInput').datepicker(datepicker_options);
+            $('#toDateInput').datepicker(datepicker_options);
+
+            $('#fromDateInput').blur(function ()
+            {
+                var id = '#fromDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $('#toDateInput').blur(function ()
+            {
+                var id = '#toDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $('#flights').DataTable({
+                order: [[5, 'asc']],
+                pageLength: 50,
+                columnDefs: [{
+                        targets: 'no-sort',
+                        orderable: false
+                    }],
+                drawCallback: function () {
+                    $('[data-toggle="tooltip"]').tooltip();
+                },
+                fixedHeader: true
+            });
+
+        });
+    </script>
+{% endblock %}

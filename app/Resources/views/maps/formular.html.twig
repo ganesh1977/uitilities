@@ -1,0 +1,95 @@
+    <form action="{{ path('maps_search') }}" method="GET">
+      <div class="row">
+        <div class="col-sm-4 col-md-3 col-lg-2">
+          <div class="form-group required">
+            <label for="brandSelect">Brand</label>
+            <select class="form-control" id="brandSelect" name="prom_cd" required>
+              <option value="bt" {% if search|length and search.prom_cd is defined and search.prom_cd == 'bt' %}selected{% endif %}>Bravo Tours</option>
+              <option value="sr" {% if search|length and search.prom_cd is defined and search.prom_cd == 'sr' %}selected{% endif %}>Solresor</option>
+              <option value="lm" {% if search|length and search.prom_cd is defined and search.prom_cd == 'lm' %}selected{% endif %}>Matkavekka</option>
+              <option value="so" {% if search|length and search.prom_cd is defined and search.prom_cd == 'so' %}selected{% endif %}>Solia</option>
+              <option value="hf" {% if search|length and search.prom_cd is defined and search.prom_cd == 'hf' %}selected{% endif %}>Heimsferdir</option>
+              <option value="st" {% if search|length and search.prom_cd is defined and search.prom_cd == 'st' %}selected{% endif %}>Sun Tours</option>
+              <option value="uk" {% if search|length and search.prom_cd is defined and search.prom_cd == 'uk' %}selected{% endif %}>Primera Holidays UK</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-sm-8 col-md-6 col-lg-4">
+          <div class="form-group required">
+            <label for="fromDateInput">Arrival between</label>
+            <div class="input-group date">
+              <input type="text" class="form-control" id="fromDateInput" name="st_dt" value="{% if search|length and search.st_dt is defined %}{{ search.st_dt }}{% endif %}" aria-describedby="calFromIcon" required>
+              <span class="input-group-addon" id="calFromIcon"><i class="fa fa-calendar"></i></span>
+              <input type="text" class="form-control" id="toDateInput" name="end_dt" value="{% if search|length and search.end_dt is defined %}{{ search.end_dt }}{% endif %}" aria-describedby="calToIcon" required>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-sm-4 col-md-3 col-lg-2">
+          <div class="form-group required">
+            <label for="stayInput">Nights</label>
+            <div class="input-group">
+              <span class="input-group-addon" id="hotelIcon"><i class="fa fa-hotel" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" id="stayInput" name="stay" value="{% if search|length %}{{ search.stay }}{% else %}7{% endif %}" required>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4 col-md-3 col-lg-2">
+          <div class="form-group">
+            <label for="departurePointInput">Depart</label>
+            <div class="input-group">
+              <span class="input-group-addon" id="depAirport"><i class="fa fa-plane" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" id="departurePointInput" name="dep_cd" value="{% if search|length and search.dep_cd is defined %}{{ search.dep_cd }}{% endif %}" style="text-transform:uppercase;" aria-describedby="depAirport">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4 col-md-3 col-lg-2">
+          <div class="form-group">
+            <label for="arrivalPointInput">Arrive</label>
+            <div class="input-group">
+              <span class="input-group-addon" id="arrAirport"><i class="fa fa-plane fa-rotate-90" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" id="arrivalPointInput" name="arr_cd" value="{% if search|length and search.arr_cd is defined %}{{ search.arr_cd }}{% endif %}" style="text-transform:uppercase;" aria-describedby="arrAirport">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4 col-md-3 col-lg-2">
+          <div class="form-group">
+            <label for="pointInput">Destination</label>
+            <div class="input-group">
+              <span class="input-group-addon" id="globeIcon"><i class="fa fa-globe" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" id="pointInput" name="pt_cd" value="{% if search|length and search.pt_cd is defined %}{{ search.pt_cd }}{% endif %}" style="text-transform:uppercase;" aria-describedby="globeIcon">
+            </div>
+          </div>
+        </div>
+
+        <div class="col-sm-4 col-md-3 col-lg-2">
+          <div class="form-group">
+            <label for="adultInput">Pax</label>
+            <div class="input-group">
+              <span class="input-group-addon" id="adultsIcon"><i class="fa fa-male" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" id="adultInput" name="n_adu" value="{% if search|length and search.n_adu is defined %}{{ search.n_adu }}{% endif %}">
+              <span class="input-group-addon" id="childrensIcon"><i class="fa fa-child" aria-hidden="true"></i></span>
+              <input type="text" class="form-control" id="childInput" name="n_chd" value="{% if search|length and search.n_chd is defined %}{{ search.n_chd }}{% endif %}">
+            </div>
+          </div>
+        </div>
+
+
+
+
+
+      
+        <div class="col-sm-4 col-md-3 col-lg-2">
+          <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-primary btn-block">Search</button>
+          </div>
+        </div>
+      
+      </div>
+    </form>

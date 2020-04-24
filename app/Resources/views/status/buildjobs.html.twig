@@ -1,0 +1,75 @@
+{% set success = '<span class="badge badge-success pull-right">Successful</span>' %}
+{% set warning = '<span class="badge badge-warning pull-right">Warning</span>' %}
+{% set danger  = '<span class="badge badge-danger pull-right">Failed</span>' %}
+
+<div class="card-block">
+    <h5 class="card-title">Accommodation Price</h5>
+    <p class="card-text">
+        {% if accom_price.found %}
+            {{ success|raw }}
+            Last updated {{ accom_price.mod_dt_tm|date('d-M-Y H:i') }}.
+        {% else %}
+            {{ danger|raw }}
+            No accommodation price build found.
+        {% endif %}
+        {% if accom_price.details|length %}
+    <table id="accomPrice" class="table table-bordered table-sm" cellspacing="0" width="100%">
+        <thead>
+        <tr>
+            <th>Status</th>
+            <th>Adu. prc.</th>
+            <th>Board</th>
+            <th>Modified</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for acc_prc in accom_price.details %}
+            <tr>
+                <td>{{ acc_prc.STS }}</td>
+                <td>{{ acc_prc.BASE_PRC|number_format }}</td>
+                <td>{{ acc_prc.BB_CD }}</td>
+                <td>{{ acc_prc.MOD_DT_TM|date('d-M-Y H:i') }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    </p>
+</div>
+
+<hr style="margin:0">
+
+<div class="card-block">
+    <h5 class="card-title">Price Definition</h5>
+    <p class="card-text">
+        {% if price_definition.found %}
+            {{ success|raw }}
+            Last updated {{ price_definition.mod_dt_tm|date('d-M-Y H:i') }}.
+        {% else %}
+            {{ danger|raw }}
+            No price definition found.
+        {% endif %}
+        {% if price_definition.details|length %}
+    <table id="priceDefinition" class="table table-bordered table-sm" cellspacing="0" width="100%">
+        <thead>
+        <tr>
+            <th>Dep.</th>
+            <th>Adu. prc.</th>
+            <th>Del. fg.</th>
+            <th>Modified</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for prc_def in price_definition.details %}
+            <tr>
+                <td>{{ prc_def.OUT_DEP_PT }}</td>
+                <td>{{ prc_def.ACC_ADU_PRC|number_format }}</td>
+                <td>{{ prc_def.DEL_FG }}</td>
+                <td>{{ prc_def.MOD_DT_TM|date('d-M-Y H:i') }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    </p>
+</div>

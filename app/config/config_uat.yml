@@ -1,0 +1,27 @@
+imports:
+    - { resource: config_prod.yml }
+
+# Doctrine Configuration
+doctrine:
+    dbal:
+        connections:
+            atcore:
+                host:        "%database_host_uat%"
+                user:        "%database_user_uat%"
+                password:    "%database_password_uat%"
+                servicename: "%database_servicename_uat%"
+            local:
+                dbname:      "sym_uat_utils"
+
+monolog:
+    handlers:
+        main:
+            type:         fingers_crossed
+            action_level: error
+            handler:      nested
+        nested:
+            type:  stream
+            path:  "%kernel.logs_dir%/%kernel.environment%.log"
+            level: debug
+        console:
+            type:  console

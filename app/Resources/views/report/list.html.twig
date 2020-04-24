@@ -1,0 +1,736 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gross Contribution Report{% endblock %}
+
+{% block stylesheets %}
+  {{ parent() }}
+  {{ datatable_css|raw }}
+  <style type="text/css">
+    #pdf form {
+      display:none;
+    }
+
+    .middle_icon {
+      top:50%;
+      position: absolute;
+      transform: translate(0, -50%)
+    }
+    .hide {
+    display: none;
+}
+.display_content {
+    display: block;
+}
+.spaceInfo { margin-left: 15px; }
+#gcrep {  margin-left: 100px;
+    float: left; }
+legend { font-size: 1.0rem !important;}
+.input-daterange input { text-align: left !important; }
+.input-group  { width: 87% !important }
+.newData {     margin-left: -32px; }
+.texta { text-align: left; }
+#date_error { color:red; }
+.sum_info { display:none;}
+.tab {     font-size: 14px; }
+
+  </style>
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+    <div class="header">
+      <h1>Gross Contribution Report</h1>
+      <p class="lead">Get Gross Contribution report based on search parameters.</p>
+    </div>
+    <hr>
+    <form action="{{ path('report_list') }}" id="searchForm" method="GET" style="margin-bottom:50px;">
+        <div class="row">
+            <div class="col-sm-12 col-md-12 texta">
+                <span id="date_error"></span>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 col-md-2">
+                <div class="form-group">
+                  <label for="promotionSelect">Brand</label>
+                  <select class="form-control selectpicker"   id="" name="prom_cd">
+                  <!--  <option value="">Please Select ...</option>
+                    <option value="BT,SR,LM,SO,HF,ST,UK">All Brands</option> -->
+                    <option value="BT" selected>Bravo Tours</option>
+                    <option value="SR">Solresor</option>
+                    <option value="LM">Matkavekka</option>
+                    <option value="SO">Solia</option>
+                    <option value="HF">Heimsferdir</option>
+                    <option value="ST">Sun Tours</option>
+                    <option value="UK">Primera Holidays UK</option>
+                  </select>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <div class="form-group ">
+                     <label for="bookFromInput">Accommodation</label>
+                    <div class="input-group1 date">
+                      <input type="text"  class="form-control disableAutoComplete" id="accomodation" name="accom" value="ALL">
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-2">
+                <div class="form-group">
+                  <label for="inputAirport">Dep. Airport</label>
+                  <input type="text" name="dep_cd" id="inputAirport" class="form-control" value="{% if search|length %}{{ search.dep_cd }}{% else %}ALL{% endif %}" style="text-transform:uppercase;" value="ALL">
+
+                </div>
+            </div>
+            <div class="col-sm-6 col-md-2">
+              <div class="form-group">
+                <label for="inputAirport">Arr. Airport</label>
+                <input type="text" name="arr_cd" id="inputAirport" class="form-control" value="{% if search|length %}{{ search.arr_cd }}{% else %}ALL{% endif %}" style="text-transform:uppercase;" >
+              </div>
+            </div>
+        </div>
+        <div class="row"><span class="spaceInfo"></span>
+            <div class="form-group">
+                <label>Booking Dates</label>
+                <div class="input-group input-daterange">
+                    <input type="text"  class="form-control disableAutoComplete" id="bookFromInput" name="book_from" placeholder="From">
+                    <div class="input-group-addon">to</div>
+                    <input type="text"   class="form-control disableAutoComplete" id="bookToInput" name="book_to" placeholder="To">
+                </div>
+            </div>
+            <div class="form-group required newData">
+                <label>Departure Dates</label>
+                <div class="input-group input-daterange">
+                    <input type="text"  class="form-control disableAutoComplete" id="depFromInput" name="dep_from" required>
+                    <div class="input-group-addon">to</div>
+                    <input type="text"   class="form-control disableAutoComplete" id="depToInput" name="dep_to" required>
+                </div>
+            </div>
+        </div>
+        <table border="0" cellpadding="10" cellspacing="10">
+            <!--<tr colspan="10" rowspan="10" align="center" id="gcrep">
+                      <td>
+                            <label class="form-check-label ml-5">
+                                <input class="form-check-input" type="checkbox" id="GcReport" value="GC" name="gc[]" >G C Report
+                            </label>
+                      </td>
+            </tr>-->
+            <tr>
+                <td>    <fieldset>
+                        <!-- <legend>Pivot Table:</legend> -->
+                        <table border="0">
+                            <tr colspan="2" rowspan="5">
+                                <td>
+                                      <label class="form-check-label ml-5">
+                                          <input class="form-check-input Hotelreport" type="checkbox" value="Hotel" name="gc[]"> Hotel
+                                      </label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                        <label class="form-check-label ml-5">
+                                            <input class="form-check-input Revenue" type="checkbox" value="Revenue" name="gc[]"> Revenue
+                                        </label>
+                                </td>
+                            </tr>
+                    <tr>
+                        <td>
+                                <label class="form-check-label ml-5">
+                                    <input class="form-check-input Flight" type="checkbox" value="Flight" name="gc[]" > Flight
+                                </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                                <label class="form-check-label ml-5">
+                                <input class="form-check-input PAX" type="checkbox" value="PAX" name="gc[]" > PAX
+                                </label>
+                        </td>
+                    </tr>
+                    <tr>
+                            <td>
+                                    <label class="form-check-label ml-5">
+                                        <input class="form-check-input Agentreport" type="checkbox"  value="Agent" name="gc[]"> Agent
+                                    </label>
+                            </td>
+                    </tr>
+                    <tr>
+                            <td>
+                             &nbsp;
+                            </td>
+                        </tr>
+                    <tr>
+                            <td>
+                                    <label class="form-check-label ml-5">
+                                        <input class="form-check-input" type="checkbox" id="PivotTable" value="PivotTable" name="gc[]"> Select All
+                                    </label>
+                            </td>
+                    </tr>
+                </table>
+                        </fieldset>
+                </td>
+                <td>
+                    <fieldset>
+                        <!-- <legend>Main Queries:</legend>  -->
+                    <table border="0">
+                        <tr>
+                            <td>
+                                <label class="form-check-label ml-5" style="align:right;">
+                                    <input class="form-check-input R16" type="checkbox" value="R16" name="gc[]"> R16
+                                </label>
+                            </td>
+                        </tr>
+                        <tr>
+                               <td>
+                                    <label class="form-check-label ml-5" style="text-align:right;">
+                                        <input class="form-check-input R9" type="checkbox"  value="R9" name="gc[]"> R9
+                                    </label>
+                               </td>
+			</tr>
+                        <tr>
+				<td>
+                                        <label class="form-check-label ml-5" style="align:right;">
+                                            <input class="form-check-input Flight_Data" type="checkbox" value="Flight_Data" name="gc[]"> Flight Data
+                                        </label>
+                                </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label class="form-check-label ml-5">
+                                    <input class="form-check-input R3-20" type="checkbox" value="R3-20" name="gc[]"> R3-20
+                                </label>
+                            </td>
+			</tr>
+                        <tr>
+                            <td>
+                                <label class="form-check-label ml-5">
+                                    <input class="form-check-input R17" type="checkbox" value="R17.2" name="gc[]"> R17.2
+                                </label>
+                            </td>
+			</tr>
+                        <tr>
+                            <td>
+                             &nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                    <label class="form-check-label ml-5">
+                                        <input class="form-check-input" type="checkbox" id="MainQueries" value="MainQueries" name="gc[]"> Select All
+                                    </label>
+                            </td>
+                        </tr>
+                    </table>
+                        </fieldset>
+                </td>
+            </tr>
+        </table>
+        <div class="row">
+            <div class="col-sm-3">
+              <div class="form-group">
+                <label class="hidden-sm-down">&nbsp;</label>
+                <input type="submit" name="view_browser" value="View in browser" id="viewBrowser" class="btn btn-primary btn-block">
+                {#{% set search_local = search|merge({'excel':'download'}) %}#}
+                {#<a href="{{ path('booking_list', search_local) }}" class="btn btn-block btn-primary">Download Excel</a>#}
+              </div>
+            </div>
+              <div class="col-sm-3">
+              <div class="form-group">
+                <label class="hidden-sm-down">&nbsp;</label>
+                <input type="submit" name="excel" value="Download Excel" id="viewExcel" class="btn btn-primary btn-block">
+                {#{% set search_local = search|merge({'excel':'download'}) %}#}
+                {#<a href="{{ path('booking_list', search_local) }}" class="btn btn-block btn-primary">Download Excel</a>#}
+              </div>
+            </div>
+         </div>
+    </form>
+</div>
+
+ {% if GCDATA is defined %}
+    {% if GCDATA is not empty %}
+        <div class="tab"><h2>{{ Brand }} - {{ StartDate }} </h2><br>
+            <table id="example" class="table table-bordered table-sm" cellspacing="0" width="100%">
+                <tr>
+                    <td><b>Arrival Airport Codes</b></td>
+                    <td width='5%' align='left'><b>Revenue</b></td>
+                    <td width='5%' align='left'><b>Hotel</b></td>
+                    <td width='5%' align='left'><b>Flight</b></td>
+                    <td width='5%' align='left'><b>Other cost</b></td>
+                    <td width='5%' align='left'><b>GC</b></td>
+                    <td width='5%' align='left'><b>GC%</b></td>
+
+                    <td width='5%' align='left'><b>Allotment</b></td>
+                    <td width='5%' align='left'><b>Sold Seats</b></td>
+
+                    <td width='5%' align='left'><b>Allotment%</b></td>
+                    <td width='5%' align='left'><b>VAT EU dest.</b></td>
+
+                    <td width='5%' align='left'><b>Sales comm.</b></td>
+                    <td width='5%' align='left'><b>Accrued delay/Empty leg</b></td>
+                    <td width='5%' align='left'><b>Destination costs</b></td>
+                    <td width='5%' align='left'><b>Net GC</b></td>
+                    <td width='5%' align='left'><b>GC/PAX</b></td>
+                    <td width='5%' align='left'><b>Rev/PAX</b></td>
+                    <td width='5%' align='left'><b>Hotel/PAX</b></td>
+                    <td width='5%' align='left'><b>Flight/PAX</b></td>
+                </tr>
+                {% set cnt = 1 %}
+                {% set flight_paf = 0 %}
+                {% set revnue_info = 0 %}
+                {% set hotel_info = 0 %}
+                {% set flight_info = 0 %}
+
+                {% set other_cost_info = 0 %}
+                {% set gc_info = 0 %}
+                {% set gcp_info = 0 %}
+                {% set allot_info = 0 %}
+                {% set sold_seat_info = 0 %}
+                {% set allotp = 0 %}
+                {% set vat_eu = 0 %}
+                {% set sales_comm = 0 %}
+                {% set acc_delay = 0 %}
+                {% set dest_costs = 0 %}
+
+                {% set net_gc = 0 %}
+                {% set gc_pax = 0 %}
+                {% set rev_pax = 0 %}
+                {% set hotel_pax = 0 %}
+                {% set flight_pax = 0 %}
+
+                {% for key,value in GCDATA[1][1] %}
+                <tr>
+                    <td class='{{ value }}'><b>{{ value }}</b></td>
+                    <td class='{{ value }}{{ cnt }}' width='5%' align='left'>
+                        {% if revenue[value][1] is defined %}
+                            {% if revenue[value][1] == value %}
+                                {{ revenue[value][2] }}
+                                {% set revnue_info = revnue_info + revenue[value][2] %}
+                            {% endif %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </td>
+                    <td class='{{ value }}{{ cnt }}' width='5%' align='left'>
+                        {% if hotel[value][1] is defined %}
+                            {{ hotel[value][2] }}
+                            {% set hotel_info = hotel_info + hotel[value][2] %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </td>
+                    <td class='{{ value }}{{ cnt }}' width='5%' align='left'>
+                        {% if flight[value][1] is defined %}
+                            {{ flight[value][2] }}
+                            {% set flight_info = flight_info+flight[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td class='{{ value }}{{ cnt }}' width='5%' align='left'>
+                        {% if revenue[value][1] is defined %}
+                            {% if revenue[value][1] == value %}
+                                {{ revenue[value][3] }}
+                                {% set other_cost_info = other_cost_info+revenue[value][3] %}
+                            {% endif %}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </td>
+                    <td class='{{ value }}{{ cnt }}' width='5%' align='left'>
+                        {% if GC[value][1] is defined %}
+                            {{ GC[value][2] }}
+                            {% set gc_info = gc_info + GC[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td class='{{ value }}{{ cnt }}' width='5%' align='left'>
+                    {% if GCP[value][1] is defined %}
+                            {{ GCP[value][2] }}
+                            {% set gcp_info = gcp_info + GCP[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td class='{{ value }}' width='5%' align='left'>
+                        {% if pax[value][1] is defined %}
+                            {{ pax[value][2] }}
+                            {% set allot_info = allot_info+pax[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td class='{{ value }}{{ cnt }}' width='5%' align='left'>
+                            {% if pax[value][1] is defined %}
+                            {{ pax[value][3] }}
+                            {% set sold_seat_info = sold_seat_info + pax[value][3] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                     <td class='{{ value }}' width='5%' align='left'>
+                        {% if pax_allotment_ar[value][1] is defined %}
+                            {{ pax_allotment_ar[value][2] }}
+                            {% set allotp = allotp +pax_allotment_ar[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                        {% if vat_ed_dest[value][1] is defined %}
+                            {{ vat_ed_dest[value][2] }}
+                            {% set vat_eu = vat_eu + vat_ed_dest[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                        {% if agent[value][1] is defined %}
+                            {{ agent[value][2] }}
+                            {% set sales_comm = sales_comm + agent[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                        {% if accur_delay[value][1] is defined %}
+                            {{ accur_delay[value][2] }}
+                            {% set acc_delay = acc_delay + accur_delay[value][2]  %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                    {% if dest_cost[value][1] is defined %}
+                            {{ dest_cost[value][2] }}
+                            {% set dest_costs = dest_costs + dest_cost[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                        {% if netGCP[value][1] is defined %}
+                            {{ netGCP[value][2] }}
+                            {% set net_gc = net_gc + netGCP[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                        {% if gcpax[value][1] is defined %}
+                            {{ gcpax[value][2] }}
+                            {% set gc_pax = gc_pax + gcpax[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                        {% if rev_pa[value][1] is defined %}
+                            {{ rev_pa[value][2] }}
+                            {% set rev_pax = rev_pax + rev_pa[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                        {% if hotel_pa[value][1] is defined %}
+                            {{ hotel_pa[value][2] }}
+                            {% set hotel_pax = hotel_pax + hotel_pa[value][2] %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                    <td width='5%' align='left' class='{{ value }}{{ cnt }}'>
+                    {% if flight_pa[value][1] is defined %}
+                            {{ flight_pa[value][2] }}
+                            {% set flight_paf = flight_paf+flight_pa[value][2]  %}
+                        {% else %}
+                             0
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% set cnt = cnt+1 %}
+                {% endfor %}
+                <tr>
+                    <td><strong>SUM</strong></td>
+                    <td><strong>{{ revnue_info }}</strong></td>
+                    <td><strong>{{ hotel_info }}</strong></td>
+                    <td><strong>{{ flight_info }}</strong></td>
+                    <td><strong>{{ other_cost_info }}</strong></td>
+                    <td><strong>{{ gc_info }}</strong></td>
+                    <td><strong>{{ gcp_info }}</strong></td>
+                    <td><strong>{{ allot_info }}</strong></td>
+                    <td><strong>{{ sold_seat_info }}</strong></td>
+                    <td><strong>{{ allotp }}</strong></td>
+                    <td><strong>{{ vat_eu }}</strong></td>
+                    <td><strong>{{ sales_comm }}</strong></td>
+                    <td><strong>{{ acc_delay  }}</strong></td>
+                    <td><strong>{{ dest_costs  }}</strong></td>
+                    <td><strong>{{ net_gc  }}</strong></td>
+                    <td><strong>{{ gc_pax  }}</strong></td>
+                    <td><strong>{{ rev_pax  }}</strong></td>
+                    <td><strong>{{ hotel_pax  }}</strong></td>
+                    <td><strong>{{ flight_paf }}</strong></td>
+                </tr>
+
+            </table>
+         </div>
+    {% endif %}
+    {% endif %}
+
+{% endblock %}
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+  <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+
+  <script type="text/javascript">
+    var jsonData = {};
+
+    $(document).ready(function() {
+    $contents = $('.reports.pop').hide();
+
+    $("#reports input ").on('click', function() {
+            $contents = $('.reports.pop').hide();
+            var report_value = $(this).val();
+            var ids="#"+$(this).id;
+
+            var i="#"+report_value+"report";
+            if(ids==i)
+            {
+                $("#"+report_value+"report").show();
+            }
+            else  { $(".reports.pop").hide(); }
+      });
+
+      var table = $('#summary').DataTable({});
+      $('#promotionSelect').val(param('prom_cd'));
+      $('#bookFromInput').val(param('book_from'));
+      $('#bookToInput').val(param('book_to'));
+      $('#depFromInput').val(param('dep_from'));
+      $('#depToInput').val(param('dep_to'));
+
+      var datepicker_options = {
+        format: 'dd-M-yyyy',
+        weekStart: 1,
+        clearBtn: true,
+        autoclose: true,
+        endDate: '+0d',
+      };
+
+      var datepicker_options_dep = {
+        format: 'dd-M-yyyy',
+        weekStart: 1,
+        clearBtn: true,
+        autoclose: true
+      };
+
+      var dt = '';
+      $("#bookFromInput").keyup(function () {
+          dt = $('#bookFromInput').val();
+      });
+      $("#bookToInput").keyup(function () {
+          dt = $('#bookToInput').val();
+      });
+
+      $('#bookFromInput').datepicker(datepicker_options);
+      $('#bookToInput').datepicker(datepicker_options);
+
+      $('#bookFromInput').blur(function ()
+      {
+          var id = '#bookFromInput';
+          formatDate(id, dt, datepicker_options);
+          dt = '';
+      });
+
+      $('#bookToInput').blur(function ()
+      {
+          var id = '#bookToInput';
+          formatDate(id, dt, datepicker_options);
+          dt = '';
+      });
+
+      $("#depFromInput").keyup(function () {
+          dt = $('#depFromInput').val();
+      });
+      $("#depToInput").keyup(function () {
+          dt = $('#depToInput').val();
+      });
+
+      $('#depFromInput').datepicker(datepicker_options);
+      $('#depToInput').datepicker(datepicker_options);
+
+      $('#depFromInput').blur(function ()
+      {
+          var id = '#depFromInput';
+          formatDate(id, dt, datepicker_options);
+          dt = '';
+      });
+
+      $('#depToInput').blur(function ()
+      {
+          var id = '#depToInput';
+          formatDate(id, dt, datepicker_options);
+          dt = '';
+      });
+
+      function param(name) {
+      return (location.search.split(name + '=')[1] || '').split('&')[0];
+    }
+    });
+
+    $(document).ready(function () {
+        $("#viewExcel").click(function()
+        {
+            var fit_start_time  = $("#bookFromInput").val(); //2013-09-5
+            var fit_end_time    = $("#depFromInput").val(); //2013-09-10
+
+            if(Date.parse(fit_start_time) > Date.parse(fit_end_time)){
+                $("#date_error").show().html('Booking dates should be earlier than departure dates');
+                return false;
+            }
+            else {
+                $("#depFromInput").css('border-color','#dedede');
+                $("#date_error").show().html('');
+            }
+
+            var fits_start_time  = $("#bookToInput").val(); //2013-09-5
+            var fits_end_time    = $("#depToInput").val(); //2013-09-10
+
+            if(Date.parse(fits_start_time) > Date.parse(fits_end_time)){
+                $("#date_error").show().html('Booking dates should be earlier than departure dates');
+                return false;
+            }
+            else {
+                $("#depToInput").css('border-color','#dedede');
+                $("#date_error").show().html('');
+            }
+
+        });
+            $("#PivotTable").on("click", function ()
+            {
+                $(".Hotelreport").prop("checked", true);
+                $(".Revenue").prop("checked", true);
+                $(".PAX").prop("checked", true);
+                $(".Agentreport").prop("checked", true);
+                $(".Flight").prop("checked", true);
+            });
+
+            $("#PivotTable").on("click", function () {
+                if (!$(this).prop("checked")){
+                    $(".Hotelreport").prop("checked", false);
+                    $(".Revenue").prop("checked", false);
+                    $(".PAX").prop("checked", false);
+                    $(".Agentreport").prop("checked", false);
+                    $(".Flight").prop("checked", false);
+                }
+            });
+
+
+            $("#MainQueries").on("click", function (){
+                $(".R16").prop("checked", true);
+                $(".R9").prop("checked", true);
+                $(".R3-20").prop("checked", true);
+                $(".R17").prop("checked", true);
+                $(".Flight_Data").prop("checked", true);
+            });
+
+            $("#MainQueries").on("click", function () {
+                if (!$(this).prop("checked")){
+                    $(".R16").prop("checked", false);
+                    $(".R9").prop("checked", false);
+                    $(".R3-20").prop("checked", false);
+                    $(".R17").prop("checked", false);
+                    $(".Flight_Data").prop("checked", false);
+                }
+            });
+
+            $("#GcReport").on("click", function ()
+            {
+                $(".Hotelreport").prop("checked", true);
+                $(".Revenue").prop("checked", true);
+                $(".PAX").prop("checked", true);
+                $(".Agentreport").prop("checked", true);
+                $(".Flight").prop("checked", true);
+                $(".R16").prop("checked", true);
+                $(".R9").prop("checked", true);
+                $(".R3-20").prop("checked", true);
+                $(".R17").prop("checked", true);
+                $(".Flight_Data").prop("checked", true);
+                $(".PivotTable").prop("checked", true);
+                $(".MainQueries").prop("checked", true);
+            });
+
+            $("#GcReport").on("click", function ()
+            {
+                if (!$(this).prop("checked"))
+                {
+                    $(".R16").prop("checked", false);
+                    $(".R9").prop("checked", false);
+                    $(".R3-20").prop("checked", false);
+                    $(".R17").prop("checked", false);
+                    $(".Flight_Data").prop("checked", false);
+
+                    $(".Hotelreport").prop("checked", false);
+                    $(".Revenue").prop("checked", false);
+                    $(".PAX").prop("checked", false);
+                    $(".Agentreport").prop("checked", false);
+                    $(".Flight").prop("checked", false);
+                    $(".PivotTable").prop("checked", false);
+                    $(".MainQueries").prop("checked", false);
+                }
+            });
+
+        });
+        function openCity(evt, cityName) {
+
+            // Declare all variables
+            var i, tabcontent, tablinks;
+
+            // Get all elements with class="tabcontent" and hide them
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+              tabcontent[i].style.display = "none";
+            }
+
+            // Get all elements with class="tablinks" and remove the class "active"
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+              tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            // Show the current tab, and add an "active" class to the button that opened the tab
+            document.getElementById(cityName).style.display = "block";
+            evt.currentTarget.className += " active";
+          }
+          /*$(document).ready(function()
+          {
+            var result = [];
+              $('table tr').each(function(){
+                    $('td', this).each(function(index, val){
+                    if(!result[index]) result[index] = 0;
+                  result[index] += parseInt($(val).text());
+                });
+              });
+
+              $('table').append('<tr></tr>');
+                var i   =   -1;
+                $(result).each(function()
+                {
+                    if(i=='0')
+                      {
+                         var tess = '<td><b>SUM</b></td>';
+                      }
+                    if(!isNaN(this))
+                    {
+                        var tess = '<td><b>'+this+'</b></td>';
+                    }
+                    $('table tr').last().append(tess)
+                    i++;
+                });
+        });*/
+  </script>
+{% endblock %}

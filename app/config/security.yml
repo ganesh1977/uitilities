@@ -1,0 +1,78 @@
+security:
+
+    providers:
+        user_db:
+            id: primera_user.db_user_provider
+        in_memory:
+            memory:
+                users:
+                    BRAVO01@air.local:
+                        password: BRAVO01
+                        roles: 'ROLE_USER'
+                    BRAVO02@air.local:
+                        password: BRAVO02
+                        roles: 'ROLE_USER'
+                    BRAVOADMIN@air.local:
+                        password: admin123
+                        roles: 'ROLE_ADMIN'
+                    margret@heimsferdir.is:
+                        password: HEIMSMARG
+                        roles: 'ROLE_USER'
+                    maria@heimsferdir.is:
+                        password: HEIMSMARI
+                        roles: 'ROLE_USER'
+                    lilja@heimsferdir.is:
+                        password: HEIMSLILJ
+                        roles: 'ROLE_USER'
+                    erlav@heimsferdir.is:
+                        password: HEIMSERLA
+                        roles: 'ROLE_USER'
+                    elin@heimsferdir.is:
+                        password: HEIMSELIN
+                        roles: 'ROLE_USER'
+                    johann@heimsferdir.is:
+                        password: HEIMSMARG
+                        roles: 'HEIMSJOHA'
+                        
+
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+
+        main:
+            logout:
+                path:   /logout
+                target: /
+
+            anonymous: ~
+            
+#            access_denied_handler: AppBundle\Security\AccessDeniedHandler
+            
+            form_login_ldap:
+                login_path: login
+                check_path: login
+                service: Symfony\Component\Ldap\Ldap
+                dn_string: '{username}'
+                provider: user_db
+
+    access_control:
+        - { path: ^/demo, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login-generic, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/webservice/statistics, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/webservice/rooms, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/webservice/slowresponse, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/webservice/v1/campaigns, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/webservice/v1/campaign/, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/pub, roles: ROLE_SUPER_ADMIN }
+        - { path: ^/, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+
+    role_hierarchy:
+        ROLE_ADMIN:       ROLE_USER
+        ROLE_SUPER_ADMIN: ROLE_ADMIN
+
+    encoders:
+        Symfony\Component\Security\Core\User\User: plaintext
+        Primera\UserBundle\Entity\User: bcrypt

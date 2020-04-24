@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Bed Control reporting{% endblock %}
+
+{% block body %}
+  <h1>Testing</h1>
+  {{ dump(flights) }}
+
+  {% set brands = {'BT':'Bravo Tours','SR':'Solresor','LM':'Matkavekka','SO':'Solia','HF':'Heimsferdir','ST':'Sun Tours','UK':'Primera Holidays UK'} %}
+  
+  {% for gp_cd, brand in brands %}
+    <h3>{{ gp_cd }}: {{ brand }}</h3>
+  {% endfor %}
+
+{% endblock %}

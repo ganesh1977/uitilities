@@ -1,0 +1,89 @@
+<div class="row">
+
+  <div class="col-12">
+
+    <h6>History</h6>
+    {% if changes|length %}
+      <table class="table table-sm table-striped" cellspacing="0" width="100%"
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>User</th>
+            <th colspan="2">Adu</th>
+            <th colspan="2">Chd 1</th>
+            <th colspan="2">Chd 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for change in changes %}
+            <tr>
+              <td>{{ change.batch.updateDtTm.date|date('d-M-Y @ H:i') }}</td>
+              <td>{{ change.batch.user.username }}</td>
+              <td><span class="st">{{ change.aduPrc|number_format }}</span><br>{{ (change.aduPrc * 1.0 + change.aduSup * 1.0)|number_format }}</td>
+              <td>{{ change.aduSup|number_format }}</td>
+              <td><span class="st">{{ change.chd1Prc|number_format }}</span><br>{{ (change.chd1Prc * 1.0 + change.chd1Sup * 1.0)|number_format }}</td>
+              <td>{{ change.chd1Sup|number_format }}</td>
+              <td><span class="st">{{ change.chd2Prc|number_format }}</span><br>{{ (change.chd2Prc * 1.0 + change.chd2Sup * 1.0)|number_format }}</td>
+              <td>{{ change.chd2Sup|number_format }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% else %}
+      <p>No changes registered.</p>
+    {% endif %}
+
+  </div>
+
+
+
+  <div class="col-12">
+
+    <h6>Bookings</h6>
+
+    {% if reservations|length %}
+      <table class="table table-sm table-striped" cellspacing="0" width="100%"
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Res. id</th>
+            <th>Adu</th>
+            <th>Chd</th>
+            <th>Inf</th>
+            <th>Price</th>
+            <th>Cost</th>
+            <th>GC</th>
+            <th>Cur.</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reservation in reservations %}
+            <tr class="
+              {% if reservation.BKG_STS == 'BKG' %}table-success
+              {% elseif reservation.BKG_STS == 'OPT' %}table-info
+              {% elseif reservation.BKG_STS == 'QTE' %}table-warning
+              {% elseif reservation.BKG_STS == 'CNX' %}table-danger
+              {% endif %}
+            ">
+              <td>{{ reservation.ORIGIN_DT|date('d-M-Y @ H:i') }}</td>
+              <td>{{ reservation.RES_ID }}{% if reservation.BKG_STS != 'BKG' %} ({{ reservation.BKG_STS }}){% endif %}</td>
+              <td>{{ reservation.N_ADU }}</td>
+              <td>{{ reservation.N_CHD }}</td>
+              <td>{{ reservation.N_INF }}</td>
+              <td>{{ reservation.SELL_PRC|number_format }}</td>
+              <td>{{ reservation.STK_COST|number_format }}</td>
+              <td>{{ reservation.PROF_EX_VAT|number_format }}</td>
+              <td>{{ reservation.CUR_CD }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% else %}
+      <p>No reservations with the combination of flights and unit registered.</p>
+    {% endif %}
+
+  </div>
+
+</div>

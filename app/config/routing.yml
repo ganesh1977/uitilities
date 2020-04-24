@@ -1,0 +1,14 @@
+app:
+    resource: "@AppBundle/Controller/"
+    type:     annotation
+
+primera_user:
+    resource: "@PrimeraUserBundle/Controller/"
+    type:     annotation
+
+primera_atcomres:
+    resource: "@PrimeraAtcomResBundle/Controller/"
+    type:     annotation
+
+logout:
+    path: /logout

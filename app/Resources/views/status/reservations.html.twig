@@ -1,0 +1,34 @@
+<div>
+  <table id="reservations" class="table table-bordered table-sm" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+        {% for day in range(first_st_dt|date('U'), last_end_dt|date('U'), 86400 ) %}
+          <th class="text-center {% if day >= st_dt|date('U') and day < end_dt|date('U') %}table-info{% endif %}">{{ day|date('d/m') }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for result in results %}
+        <tr>
+          {% set days_before = (result.ST_DT|date('U') - first_st_dt|date('U')) / 86400 %}
+          {% set days_after = (last_end_dt|date('U') - result.END_DT|date('U')) / 86400 + 1 %}
+          {% set days = (result.END_DT|date('U') - result.ST_DT|date('U')) / 86400 %}
+          
+          {% if days_before > 0 %}
+            {% for i in 1..days_before %}
+              <td class="no-booking"></td>
+            {% endfor %}
+          {% endif %}
+          
+          <td colspan="{{ days }}" class="table-success text-center">{{ result.RES_ID }} <small>({{ result.ST_DT|date('d-M') }} to {{ result.END_DT|date('d-M') }} bkd {{ result.ORIGIN_DT|date('d-M-Y') }})</small></td>
+          
+          {% if days_after > 0 %}
+            {% for i in 1..days_after %}
+              <td class="no-booking"></td>
+            {% endfor %}
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

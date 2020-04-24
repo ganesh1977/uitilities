@@ -1,0 +1,99 @@
+{% if search|length %}
+
+  {% if search.exclude_cnx is defined %}
+    {% set exclude_cnx = 1 %}
+  {% else %}
+    {% set exclude_cnx = 0 %}
+  {% endif %}
+
+  {% if search.exclude_qte is defined %}
+    {% set exclude_qte = 1 %}
+  {% else %}
+    {% set exclude_qte = 0 %}
+  {% endif %}
+
+{% else %}
+
+  {% set exclude_cnx = 1 %}
+  {% set exclude_qte = 1 %}
+
+{% endif %}
+
+
+<form action="{{ path('statistics') }}" method="GET">
+  <div class="row">
+    <div class="col-sm-4 col-md-2">
+      <div class="form-group">
+        <label for="brandSelect">Brand</label>
+        <select class="form-control" id="brandSelect" name="prom_cd">
+          <option value="" {% if search|length and search.prom_cd == '' %}selected{% endif %}>All</option>
+          <option value="bt" {% if search|length and search.prom_cd == 'bt' %}selected{% endif %}>Bravo Tours</option>
+          <option value="sr" {% if search|length and search.prom_cd == 'sr' %}selected{% endif %}>Solresor</option>
+          <option value="lm" {% if search|length and search.prom_cd == 'lm' %}selected{% endif %}>Matkavekka</option>
+          <option value="so" {% if search|length and search.prom_cd == 'so' %}selected{% endif %}>Solia</option>
+          <option value="hf" {% if search|length and search.prom_cd == 'hf' %}selected{% endif %}>Heimsferdir</option>
+          <option value="st" {% if search|length and search.prom_cd == 'st' %}selected{% endif %}>Sun Tours</option>
+          <option value="uk" {% if search|length and search.prom_cd == 'uk' %}selected{% endif %}>Primera Holidays UK</option>
+        </select>
+      </div>
+    </div>
+    <div class="col-sm-4 col-md-4">
+      <div class="form-group">
+        <label>Created</label>
+        <div class="input-group input-daterange">
+          {#<input type="text" class="form-control" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}">#}
+          <input type="text" class="form-control disableAutoComplete" id="fromDateInput" name="st_dt" value="{% if search|length %}{{ search.st_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}">
+          <div class="input-group-addon">to</div>
+          <input type="text" class="form-control disableAutoComplete" id="toDateInput" name="end_dt" value="{% if search|length %}{{ search.end_dt }}{% else %}{{ 'now'|date('d-M-Y') }}{% endif %}">
+        </div>
+      </div>
+    </div>
+
+
+    <div class="col-sm-4 col-md-4">
+      <div class="form-group">
+        <label>Service start</label>
+        <div class="input-group input-daterange">
+          <input type="text" class="form-control" id="firstStartDateInput" name="first_st_dt" value="{% if search|length %}{{ search.first_st_dt }}{% endif %}">
+          <div class="input-group-addon">to</div>
+          <input type="text" class="form-control" id="lastEndDateInput" name="last_end_dt" value="{% if search|length %}{{ search.last_end_dt }}{% endif %}">
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-4 col-md-2">
+      <div class="form-group">
+        <label for="geographyInput">Geography <i class="fa fa-question-circle-o" aria-hidden="true" data-toggle="tooltip" data-placement="top" data-html="true" title="Use either country, location or resort code"></i></label>
+        <input type="text" class="form-control" id="geographyInput" name="geography" value="{% if search|length %}{{ search.geography }}{% endif %}" style="text-transform:uppercase;">
+      </div>
+    </div>
+
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12">
+
+      <div class="form-check">
+        <label class="form-check-label">
+          <input class="form-check-input" type="checkbox" name="exclude_cnx" value="1"{% if exclude_cnx %} checked{% endif %}> Exclude CNX
+        </label>
+
+        <label class="form-check-label  ml-4">
+          <input class="form-check-input" type="checkbox" name="exclude_qte" value="1"{% if exclude_qte %} checked{% endif %}> Exclude QTE
+        </label>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-sm-12 col-md-12">
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button type="submit" class="btn btn-primary btn-block">View status</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<hr>

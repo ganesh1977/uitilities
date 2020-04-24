@@ -1,0 +1,23 @@
+<input type="hidden" name="sec_id" value="{{ sec_id }}">
+
+{% if not is_granted('ROLE_FLIGHT_ADMIN') %}
+  <div class="alert alert-warning" role="alert">
+    <strong>Access not allowed:</strong> You don't have access rights to save seat changes. Please ask your manager to contact IT Support on <a href="mailto:support@primerait.com">support@primerait.com</a>.
+  </div>
+{% endif %}
+
+<div class="form-group">
+  <label for="adjustSeats">Adjust seats ({{ seats }})</label>
+  <input type="number" class="form-control" name="adjust_seats" id="adjustSeats" aria-describedby="seatsHelp" {% if not is_granted('ROLE_FLIGHT_ADMIN') %}disabled{% endif %}>
+  <small id="seatsHelp" class="form-text text-muted">Input the change (not total) of seats on this flight.</small>
+</div>
+
+<h6>Sell rules</h6>
+<div class="row" id="adjustSellRules">
+  {% for rule,alt in sell_rules %}
+    <div class="form-group col-3">
+      <label><small>{{ rule }}{% if alt > 0 %} ({{ alt }}){% endif %}</small></label>
+      <input class="form-control form-control-sm sell-rule" name="sell_rules[{{ rule }}]" type="number" {% if not is_granted('ROLE_FLIGHT_ADMIN') %}disabled{% endif %}>
+    </div>
+  {% endfor %}
+</div>

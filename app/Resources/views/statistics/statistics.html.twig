@@ -1,0 +1,197 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistics{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ datatable_css|raw }}
+    <style>
+        #reservations {
+            font-size: 0.85em;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="header">
+            <h1>Reservations</h1>
+            <p class="lead">Add your search parameters, click apply and browse the reservations made. You can use the table search to filter the results.</p>
+        </div>
+
+        {% block search_form %}
+            {% include "statistics/formular.html.twig" %}
+        {% endblock %}
+
+        {% if limit_reached %}
+            <div class="alert alert-danger" role="alert">
+                <h4 class="alert-heading">Limit of {{ limit_reached|number_format }} bookings!</h4>
+                <p class="mb-0">
+                    The system is limited to displaying {{ limit_reached|number_format }} bookings per search.
+                    Try adding or limiting your search criteria.
+                </p>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <table id="reservations" class="table table-sm table-striped" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Prom.</th>
+                <th>Mkt.</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Dep.</th>
+                <th>Arr.</th>
+                <th>Accommodation</th>
+                <th>Pax</th>
+                <th>Price (EUR)</th>
+                <th>GC (EUR)</th>
+                <th>Balance (EUR)</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reservation in reservations %}
+
+                {% set eur_prof = (reservation.PROF_EX_VAT / exchanges[reservation.PROM_CD|slice(0,2)])|round(2) %}
+                {% set eur_price = (reservation.SELL_PRC / exchanges[reservation.PROM_CD|slice(0,2)])|round(2) %}
+                {% set eur_balance = (reservation.BAL / exchanges[reservation.PROM_CD|slice(0,2)])|round(2) %}
+
+                <tr>
+                    <td>{{ reservation.RES_ID }}</td>
+                    <td data-search="{{ reservation.PROM_NAME }} {{ reservation.PROM_CD }}">{{ reservation.PROM_CD }}</td>
+                    <td data-search="{{ reservation.MKT_NAME }} {{ reservation.MKT_CD }}">{{ reservation.MKT_CD }}</td>
+                    <td>{{ reservation.BKG_STS }}</td>
+                    <td data-sort="{{ reservation.FIRST_ST_DT|date('U') }}" style="white-space:nowrap;">{{ reservation.FIRST_ST_DT|date('d-M-Y') }}</td>
+                    <td data-sort="{{ reservation.LAST_END_DT|date('U') }}" style="white-space:nowrap;">{{ reservation.LAST_END_DT|date('d-M-Y') }}</td>
+                    <td>{{ reservation.DEP_CD }}</td>
+                    <td>{{ reservation.ARR_CD }}</td>
+                    <td>{% if reservation.ACCOM_CD %}{{ reservation.ACCOM_CD }}: {{ reservation.ACCOM }}{% else %}Transport only{% endif %}</td>
+                    <td data-sort="{{ reservation.N_PAX }}">{{ reservation.N_PAX }}</td>
+                    <td data-sort="{{ eur_price }}" data-toggle="tooltip" data-placement="top" data-html="true" title="{{ reservation.SELL_PRC|number_format }} {{ reservation.CUR_CD }}">{{ eur_price|number_format }}</td>
+                    <td data-sort="{{ eur_prof }}" data-toggle="tooltip" data-placement="top" data-html="true" title="{{ reservation.PROF_EX_VAT|number_format }} {{ reservation.CUR_CD }}">{{ eur_prof|number_format }}</td>
+                    <td data-sort="{{ eur_balance }}" data-toggle="tooltip" data-placement="top" data-html="true" title="{{ reservation.BAL|number_format }} {{ reservation.CUR_CD }}">{{ eur_balance|number_format }}</td>
+                    <td data-sort="{{ reservation.ORIGIN_DT|date('U') }}">{{ reservation.ORIGIN_DT|date('d-M-Y H:i') }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr style="font-style:italic">
+                <td>Totals</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td><!-- n_pax -->
+                <td></td><!-- sell_prc -->
+                <td></td><!-- prox_ex_vat -->
+                <td></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+{% endblock %}
+
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script src="{{ asset('assets/js/jquery.number.min.js') }}"></script>
+    <script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            var table = $('#reservations').DataTable({
+                order: [[13, 'desc']],
+                pageLength: 25,
+                drawCallback: function () {
+                    $('[data-toggle="tooltip"]').tooltip();
+
+                    var api = this.api();
+
+                    var pax = 0;
+                    var sales = 0.0;
+                    var profit = 0.0;
+                    var balance = 0.0;
+                    api.column(-5, {search: 'applied'}).nodes().each(function (value, index) {
+                        pax += $(value).data('sort');
+                    });
+                    api.column(-4, {search: 'applied'}).nodes().each(function (value, index) {
+                        sales += $(value).data('sort');
+                    });
+                    api.column(-3, {search: 'applied'}).nodes().each(function (value, index) {
+                        profit += $(value).data('sort');
+                    });
+                    api.column(-2, {search: 'applied'}).nodes().each(function (value, index) {
+                        balance += $(value).data('sort');
+                    });
+
+                    $(api.column(-5).footer()).html(pax);
+                    $(api.column(-4).footer()).html($.number(sales));
+                    $(api.column(-3).footer()).html($.number(profit));
+                    $(api.column(-2).footer()).html($.number(balance));
+                },
+
+            });
+            
+            var dt = '';
+            $("#fromDateInput").keyup(function () {
+                dt = $('#fromDateInput').val();
+            });
+            $("#toDateInput").keyup(function () {
+                dt = $('#toDateInput').val();
+            });
+
+            $('#fromDateInput').datepicker(datepicker_options);
+            $('#toDateInput').datepicker(datepicker_options);
+
+            $('#fromDateInput').blur(function ()
+            {
+                var id = '#fromDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $('#toDateInput').blur(function ()
+            {
+                var id = '#toDateInput';
+                formatDate(id, dt, datepicker_options);
+                dt = '';
+            });
+
+            $("#firstStartDateInput").keyup(function () {
+                dt = $('#firstStartDateInput').val();
+            });
+            $("#lastEndDateInput").keyup(function () {
+                dt = $('#lastEndDateInput').val();
+            });
+
+            $('#firstStartDateInput').datepicker(datepicker_options);
+            $('#lastEndDateInput').datepicker(datepicker_options);
+
+            $('#firstStartDateInput').blur(function ()
+            {
+                var id = '#firstStartDateInput';
+                formatDate(id, dt);
+                dt = '';
+            });
+
+            $('#lastEndDateInput').blur(function ()
+            {
+                var id = '#lastEndDateInput';
+                formatDate(id, dt);
+                dt = '';
+            });
+        });
+    </script>
+{% endblock %}

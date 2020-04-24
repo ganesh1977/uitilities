@@ -1,0 +1,108 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Routes{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  <style type="text/css">
+    .table-really-small td, .table-really-small th {
+      text-align: center;
+      padding: 8px 3px;
+      border: 1px solid #ccc;
+      font-size: 0.8em;
+    }
+    .tda {
+      background: green;
+    }
+    .tdb {
+      background: yellow;
+    }
+    .tdf {
+      background: red;
+    }
+  </style>
+{% endblock %}
+
+
+{% block body %}
+  <div class="container-fluid csstransforms">
+  	<div class="header">
+  		<h1>Route overview</h1>
+  		<p class="lead">View all flights on a specific route!</p>
+  	</div>
+    
+    <hr>
+
+		<form action="{{ path('yield_routes')}}" method="GET">
+      <div class="row">
+        <div class="col-sm-6">
+    		  <div class="form-group">
+            <label for="inputRouteCd">Route CD (8 characters)</label>
+            <input type="text" name="route_cd" id="inputRouteCd" class="form-control" value="{{ route_cd }}" style="text-transform:uppercase;">
+          </div>
+        </div>
+        <div class="col-sm-6">
+    		  <div class="form-group">
+            <label>&nbsp;</label>
+            <button type="submit" class="btn btn-block btn-primary">Apply</button>
+          </div>
+        </div>
+      </div>
+		</form>
+
+    {% if route is not empty %}
+      <hr>
+  
+      {% set loop_data = {'success':'Allotment','warning':'Option/Booked','danger':'Free'} %}
+  
+    	<table id="route" class="table-really-small" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th rowspan="2">Date</th>
+            <th rowspan="2">Day</th>
+            {% for data in loop_data %}
+              <th colspan="{{ global_rules|length + 1 }}">{{ data }}</th>
+            {% endfor %}
+          </tr>
+          <tr>
+            {% for data in loop_data %}
+              {% for rule_cd,rule_name in global_rules %}
+                <th title="{{ rule_name }}">{{ rule_cd }}</th>
+              {% endfor %}
+                <th>SUM</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for date,route_info in route %}
+            <tr>
+              <td>{{ date|date('d-M-Y') }}</td>
+              <td>{{ date|date('D') }}</td>
+              {% for class,data in loop_data %}
+                {% for rule_cd,rule_name in global_rules %}
+                  <td class="table-{{ class }}">
+                    {% if route_info['rules'][rule_cd] is defined %}
+                      {% if data == 'Allotment' %}{{ route_info['rules'][rule_cd].alt }}{% endif %}
+                      {% if data == 'Option/Booked' %}{{ route_info['rules'][rule_cd].opt + route_info['rules'][rule_cd].bkd }}{% endif %}
+                      {% if data == 'Free' %}{{ route_info['rules'][rule_cd].alt - route_info['rules'][rule_cd].opt - route_info['rules'][rule_cd].bkd }}{% endif %}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                {% endfor %}
+
+                <td class="table-{{ class }}">
+                  {% if data == 'Allotment' %}{{ route_info.alt }}{% if route_info.alt != route_info.rules_alt %} <i class="fa fa-exclamation-circle" title="Total allotment and sell rule allotment not matching"></i>{% endif %}{% endif %}
+                  {% if data == 'Option/Booked' %}{{ route_info.opt + route_info.bkd }}{% endif %}
+                  {% if data == 'Free' %}{{ route_info.alt - route_info.opt - route_info.bkd }}{% endif %}
+                </td>
+                
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+  </div>  
+{% endblock %}

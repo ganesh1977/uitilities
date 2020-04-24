@@ -1,0 +1,269 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Campaign offers{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  {{ datatable_css|raw }}
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowreorder/1.2.0/css/rowReorder.bootstrap4.min.css">
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+    <nav class="breadcrumb">
+      <a style="color:#306aaa;" class="breadcrumb-item" href="{{ path('campaign') }}">Campaign Management</a>
+      <span class="breadcrumb-item active">Offers</span>
+    </nav>
+
+  	<div class="header">
+      <span class="pull-right">
+          <button data-toggle="modal" data-target="#editModal" data-offer-id="" data-campaign-id="{{ campaign.id }}" class="btn btn-sm btn-primary">
+              <i class="fa fa-3x fa-plus-circle"></i>
+              <br />NEW OFFER
+          </button>
+      </span>
+  		<h1>{{ campaign.cd }}</h1>
+  		<p class="lead">{{ campaign.description }}</p>
+
+        <hr style="{% if campaign.description is empty %}margin-top: 2rem; {% endif %}">
+  	</div>
+
+	<table id="offers" class="table table-striped" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+          {% if campaign.overruleSort %}
+              <th>Sort</th>
+          {% endif %}
+        <th>Start Date</th>
+        <th>End Date</th>
+        <th>Stay</th>
+        <th>Dep. Airport</th>
+        <th>Carrier Code</th>
+        <th>Accommodation</th>
+        <th>Room</th>
+        <th>Board</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for offer in campaign.offers %}
+        <tr data-offer-id="{{ offer.id }}">
+            {% if campaign.overruleSort %}
+                <td class="pull-left"><span>&#8286;&#8286;</span>{{ offer.sort }}</td>
+            {% endif %}
+          <td>{{ offer.stDt|date('d-M-Y') }}</td>
+          <td>{{ offer.endDt|date('d-M-Y') }}</td>
+          <td>{{ offer.stay }}</td>
+          <td>{% if offer.depCd %}{{ offer.depCd }}{% else %}&dash;{%endif %}</td>
+          <td>{% if offer.carrCd %}{{ offer.carrCd }}{% else %}&dash;{%endif %}</td>
+          <td>{{ offer.stcStkCd }}</td>
+          <td>{% if offer.rmCd %}{{ offer.rmCd }}{% else %}&dash;{%endif %}</td>
+          <td>{% if offer.bb %}{{ offer.bb }}{% else %}&dash;{%endif %}</td>
+          <td>
+              <a style="color:white;" href="#" data-toggle="modal" data-target="#editModal" data-offer-id="{{ offer.id }}" data-campaign-id="{{ campaign.id }}" class="btn btn-primary btn-sm">Edit offer</a>
+              <!-- <i data-toggle="modal" data-target="#editModal" data-offer-id="{{ offer.id }}" data-campaign-id="{{ campaign.id }}" class="fa fa-pencil-square" aria-hidden="true" style="cursor:pointer"></i> -->
+              <input type="button" data-offer-id="{{ offer.id }}" class="btn btn-danger btn-sm" name="delete_offer_button" value="Delete offer">
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  </div>
+
+  <div class="modal fade" id="editModal" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Create campaign</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <p>Modal body text goes here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <input type="hidden" id="prom_cd" value="{{ prom_cd }}" />
+    <input type="hidden" id="promotion_cd" value="{{ promotion_cd }}" />
+
+{% endblock %}
+
+{% block javascripts_footer %}
+    {{ parent() }}
+    {{ datatable_js|raw }}
+    <script type="text/javascript" src="//cdn.datatables.net/rowreorder/1.2.0/js/dataTables.rowReorder.min.js"></script>
+    <script src="{{ asset('assets/js/dataTables.plugin.js') }}"></script>
+    <script src="{{ asset('assets/js/add-offer.js') }}"></script>
+		<script type="text/javascript" src="{{ asset('assets/js/custom.js') }}"></script>
+
+    <script>
+        try {
+            var airports = [
+                {% for airport in airports %}
+                {id: '{{ airport.code }}', text: '{{ "#{airport.code} - #{airport.cityName} - #{airport.name}" }}'},
+                {% endfor %}
+            ];
+        }
+        catch (e) {
+            alert('Could not load airport data. Some features may not work as intended.');
+        }
+
+        try {
+            var boardtypes = [
+                {% for key, value in boardtypes %}
+                {id: '{{ key }}', text: '{{ value }}'},
+                {% endfor %}
+            ];
+        }
+        catch (e) {
+            alert('Could not load board basis data. Some features may not work as intended.');
+        }
+    </script>
+
+    <script type="text/javascript">
+
+        var datepicker_options = {
+            format: 'dd-M-yyyy',
+            autoclose: true,
+            weekStart: 1,
+            showWeekDays: true
+        };
+
+        var loadingHtml = '<p align="center"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i></p>';
+
+        $(document).ready(function ()
+        {
+
+            {% if campaign.overruleSort == false %}
+
+                var table = $('#offers').DataTable();
+
+            {%  else %}
+
+                var table = $('#offers').DataTable({
+                    rowReorder: true,
+                    columnDefs: [
+                        { orderable: true, className: 'reorder', targets: 0 },
+                        { orderable: false, targets: [8] },
+                        { type: 'formatted-num', targets: 0}
+                    ],
+                });
+                table.on('row-reorder', onRowReOrder);
+            {% endif %}
+
+            table.on('draw', function()
+            {
+                $('input[name="delete_offer_button"]').off().click(onDeleteOffer);
+            });
+
+
+            window.modal = $("#editModal");
+            modal.draggable({
+                handle: ".modal-header"
+            });
+
+            modal.on('show.bs.modal', function (event)
+            {
+                var btn = $(event.relatedTarget);
+                var offer_id = btn.data('offer-id');
+                var campaign_id = btn.data('campaign-id');
+
+                window.campaign_id = campaign_id;
+
+                modal.find('.modal-body').html(loadingHtml);
+                modal.find('.modal-title').text('Add offer');
+
+                if (offer_id) {
+                    modal.find('.modal-title').text('Edit offer');
+                }
+
+                window.campaignOffer.removeEvents();
+
+                var modalUrl = '{{ path("campaign_offers_edit") }}?offer_id=' + offer_id + '&campaign_id=' + campaign_id;
+                modal.find('.modal-body').load(modalUrl, onModalLoad);
+            });
+
+            $('input[name="delete_offer_button"]').click(onDeleteOffer);
+
+        });
+
+        var onDeleteOffer = function(event) {
+
+            var offer_id = $(this).data('offer-id');
+            var item = $(event.target);
+            var row =  item.closest('tr');
+            var sortNo = row.find('td:eq(0)').html();
+            sortNo = sortNo.replace(/<span>\S+span> /, '');
+
+            if (confirm("Are you sure to delete this offer Sort No." + sortNo+ "?")) {
+                $.ajax({
+                    url: '/utils/dev/campaign/offer/delete',
+                    data: JSON.stringify({offer_id : offer_id}),
+                    type: 'post',
+                    dataType: "json",
+                    success: function (res) {
+                        location.reload();
+                    },
+                    error: function(xhr, textStatus, error) {
+                        alert(xhr.responseJSON.error);
+                    }.bind(this)
+                });
+            }
+        };
+
+        var onModalLoad = function ()
+        {
+            modal.find('#form_campaign').val(window.campaign_id); // Wan: what is this?
+            campaignOffer.init();
+        };
+
+        var onRowReOrder = function (e, diff, edit)
+        {
+            var sort_changes = {};
+
+            // for (var i = 0, ien = diff.length; i < ien; i++) {
+            for (var i in diff) {
+                if (!diff.hasOwnProperty(i)) { continue; }
+                // console.log('Offer id ' + $(diff[i].node).data('offer-id') + ' is now in position ' + diff[i].newData);
+                sort_changes[$(diff[i].node).data('offer-id')] = (diff[i].newData).replace(/<span>\S+span>/, '');
+            }
+
+            $.post("{{ path('campaign_offers_ajaxsort') }}", {
+                campaign_id: {{ campaign.id }},
+                sort_changes: sort_changes
+            }, function (response) {
+                if (response.status != 'OK') {
+                    alert('Error: ' + response.message);
+                }
+            }, 'json');
+
+        };
+
+    </script>
+    <style>
+        #editModal .modal-header {
+            cursor: move;
+        }
+
+        label.loading:after, button.loading:after {
+            content: '\f110';
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+            font: normal normal normal 14px/1 FontAwesome;
+            font-size: inherit;
+            text-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            -webkit-animation: fa-spin 2s infinite linear;
+            animation: fa-spin 2s infinite linear;
+            /*top: 35px;
+            left: 345px;*/
+        }
+
+    </style>
+{% endblock %}

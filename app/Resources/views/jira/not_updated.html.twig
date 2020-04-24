@@ -1,0 +1,53 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Jira - not updated by ATCORE{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>JIRA <small>(not updated by ATCORE last {{ days.highest }}/{{ days.lowest }} days)</small></h1>
+  	</div>
+  </div>
+
+	<table class="table table-striped" id="updated" cellspacing="0" width="100%">
+		<thead>
+			<tr>
+        <th>Priority</th>
+				<th>Key</th>
+        <th>Created</th>
+				<th>Summary</th>
+        <th>ATCORE update</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for key,issue in issues %}
+				<tr>
+          <td data-order="{{ issue.priority.name }}"><img src="{{ issue.priority.icon }}"> {{ issue.priority.name }}</td>
+					<td><a href="https://primerait.atlassian.net/browse/{{ key }}" target="_blank">{{ key }}</a></td>
+          <td>{{ issue.created|date('Y-m-d H:i') }}</td>
+          <td>{{ issue.summary }}</td>
+          <td data-order="{{ issue.latest_update }}">{% if issue.latest_update > 0 %}{{ issue.latest_update|date('Y-m-d H:i') }}{% else %}Never{% endif %}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% endblock %}
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$('#updated').DataTable({
+				order: [[ 4, 'asc' ]],
+				pageLength: 50
+			});
+		});
+	</script>
+{% endblock %}

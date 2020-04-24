@@ -1,0 +1,58 @@
+{% form_theme form 'form/bootstrap_3_layout_helper.html.twig' %}
+
+{{ form_start(form) }}
+{{ form_widget(form) }}
+{{ form_end(form) }}
+{% if campaignId %}
+    <input
+        type="button"
+        data-campaign-id="{{ campaignId }}"
+        class="form-group-btn-item-pull-up btn btn-danger pull-right"
+        id="delete_campaign_button"
+        value="Delete campaign" />
+{% endif %}
+<script>
+
+    $(document).ready(function()
+    {
+        {% if not campaignId %}
+        campaignCodeGenerator.init();
+        {% endif %}
+    });
+
+    var campaignCodeGenerator = {
+        $campaignSelector: null,
+        $campaignCode: null,
+
+        promCode: null,
+        promCodeNumbers: []
+    };
+
+    campaignCodeGenerator.init = function()
+    {
+        this.$campaignSelector = $('.campaign');
+        this.$campaignCode     = $('.campaign_code');
+
+        this.promCodeNumbers = JSON.parse('{{ promCodeNumbers|json_encode()|e('js') }}');
+        this.promCode = this.$campaignSelector.val();
+
+        this.addEvents();
+        this.$campaignSelector.trigger('change');
+    };
+
+    campaignCodeGenerator.addEvents = function()
+    {
+        this.$campaignSelector.on('change', this.campaignSwitch.bind(this));
+    };
+
+    campaignCodeGenerator.campaignSwitch = function(event)
+    {
+        var chosenProm = this.$campaignSelector.val();
+        var promNumber = this.promCodeNumbers.hasOwnProperty(chosenProm) ?
+            this.promCodeNumbers[chosenProm] : 1;
+
+        var promCode = chosenProm +'-'+ promNumber;
+        this.$campaignCode.val(promCode);
+    };
+
+</script>

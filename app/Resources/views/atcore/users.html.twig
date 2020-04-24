@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}ATCORE users{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+  {{ datatable_css|raw }}
+{% endblock %}
+
+{% block body %}
+  <div class="container-fluid">
+  	<div class="header">
+  		<h1>ATCORE users</h1>
+  		<p class="lead">Please verify that all the users in the list are still working in the organization.</p>
+  	</div>
+  </div>
+
+	<table id="users" class="table table-striped" cellspacing="0" width="100%">
+    <thead>
+      <tr>
+        <th>CD</th>
+        <th>Name</th>
+        <th>E-mail</th>
+        <th>Domain</th>
+        <th>Office</th>
+        <th>Last login</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <td>{{ user.CD }}</td>
+          <td>{{ user.NAME }}</td>
+          <td>{{ user.EMAIL }}</td>
+          <td>{{ user.DOMAIN }}</td>
+          <td>{{ user.OFF_CD }}</td>
+          <td data-sort="{{ user.LAST_LOGIN }}">{{ user.LAST_LOGIN }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+{% endblock %}
+
+
+{% block javascripts_footer %}
+  {{ parent() }}
+  {{ datatable_js|raw }}
+  
+	<script type="text/javascript">
+    $(document).ready(function() {
+
+			$('#users').DataTable();
+
+    });
+  </script>
+  
+{% endblock %}

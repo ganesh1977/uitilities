@@ -1,0 +1,114 @@
+<html>  
+    <head>  
+        <title>Inline Table Insert Update Delete in PHP using jsGrid</title>  
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css" />
+  <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css" />
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js"></script>
+ <style>
+  .hide
+  {
+     display:none;
+  }
+  </style>
+    </head>  
+    <body>  
+        <div class="container">  
+   <br />
+   <div class="table-responsive">  
+    <h3 align="center">Cost lookup</h3><br />
+   
+    <div id="grid_table"></div>
+   </div>  
+  </div>
+    </body>  
+</html>  
+
+
+
+ <script>
+
+    var cl={{ output|raw}};
+    
+ 
+ 
+    $('#grid_table').jsGrid({
+
+     width: "100%",
+     height: "600px",
+
+     filtering: true,
+     inserting:true,
+     editing: true,
+     sorting: true,
+     paging: true,
+     autoload: true,
+     pageSize: 10,
+     pageButtonCount: 5,
+     deleteConfirm: "Do you really want to delete data?",
+     data: cl,
+     controller: {
+     
+      insertItem: function(item){
+       return $.ajax({
+        type: "POST",
+        url: "/utils/uat/lookup/fetch",
+        data:item,
+         success: function(data) {
+                location.reload();
+            }
+       });
+       //location.reload(true);
+      },
+      updateItem: function(item){
+       return $.ajax({
+        type: "PUT",
+        url: "/utils/uat/lookup/fetch",
+        data: item,
+         success: function(data) {
+                location.reload();
+            }
+       });
+       //location.reload(true);
+      },
+      deleteItem: function(item){
+       return $.ajax({
+        type: "DELETE",
+        url: "/utils/uat/lookup/fetch",
+        data: item,
+         success: function(data) {
+                location.reload();
+            }
+       });
+       //location.reload(true);
+      },
+     },
+
+     fields: [
+      {
+       name: "id",
+    type: "hidden",
+    css: 'hide'
+      },
+      {
+       name: "servicecategory", 
+    type: "text", 
+    width: 150, 
+    validate: "required"
+      },
+      {
+       name: "percentage", 
+    type: "text", 
+    width: 150, 
+    validate: "required"
+      },
+      {
+       type: "control"
+      }
+     ]
+
+    });
+   // var table = $('#grid_table').jsGrid().reload();
+</script>
+
+   

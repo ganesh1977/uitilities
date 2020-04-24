@@ -1,0 +1,32 @@
+---
+- hosts: prod
+  remote_user: ansible
+#  become: yes
+#  become_user: root
+
+  vars:
+    # necessary project vars
+    symfony_project_root: /var/www/symfony/utils.primerait.com
+    symfony_project_name: utils
+    symfony_project_composer_path: /var/www/symfony/utils.primerait.com/shared/composer.phar
+    symfony_project_repo: git@bitbucket.org:travelconordic/utilities.git
+    symfony_project_env: prod
+
+    #symfony_project_post_folder_creation_tasks: "{{playbook_dir}}/../hooks/post_folder_creation.yml"
+    
+    # optional parameters, covered by defaults
+    symfony_project_shared_folders: # folders to be linked from shared directory to release dir
+      - {name: logs, src: var/logs, path: var/logs}
+      - {name: sessions, src: var/sessions, path: var/sessions}
+      - {name: uploads, src: web/uploads, path: web/uploads}
+    symfony_project_console_command: 'bin/console' # sf >= 3.0 bin/console
+    
+    symfony_project_parameters_file: parameters.yml
+
+  roles:
+    - servergrove.symfony2
+ 
+  tasks:
+    - local_action: osx_say msg="Deployment complete." voice=Daniel
+
+# Using https://github.com/servergrove/ansible-symfony2

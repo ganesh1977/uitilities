@@ -1,0 +1,9 @@
+{% form_theme form 'bootstrap_3_layout.html.twig' %}
+
+{{ form_start(form) }}
+{{ form_widget(form) }}
+{{ form_end(form) }}
+{% if offerId %}
+    <input type="button" data-offer-id="{{ offerId }}" class="form-group-btn-item-pull-up btn btn-danger pull-right" id="delete_offer_button" value="Delete offer">
+
+{% endif %}
