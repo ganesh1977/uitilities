@@ -133,31 +133,6 @@ httplug:
         acme:
             factory: httplug.factory.guzzle6
 
-primera_user:
-    hostnames:
-        - bravotours.dk
-        - solresor.se
-        - lomamatkat.fi
-        - matkavekka.fi
-        - solia.no
-        - heimsferdir.is
-        - suntours.dk
-        - primerait.com
-        - primeragroup.com
-        - primeraair.com
-        - air.local
-        - travel.local
-        - travelconordic.local
-        - travelconordic.com
-        - primeratravel.com
-    roles:
-        ROLE_USER: Normal user
-        ROLE_ADMIN: Admin user
-        ROLE_SUPER_ADMIN: Super admin user
-        ROLE_YIELD: Yield department
-        ROLE_FLIGHT: Flight department
-        ROLE_FLIGHT_ADMIN: Flight admin
-
 jms_serializer:
     metadata:
         directories:
