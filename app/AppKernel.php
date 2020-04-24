@@ -22,8 +22,8 @@ class AppKernel extends Kernel
             new Ivory\GoogleMapBundle\IvoryGoogleMapBundle(),
             new Ivory\SerializerBundle\IvorySerializerBundle(),
             new Http\HttplugBundle\HttplugBundle(),
-            new Primera\UserBundle\PrimeraUserBundle(),
-            new Primera\AtcomResBundle\PrimeraAtcomResBundle(),
+            //new Primera\UserBundle\PrimeraUserBundle(),
+            //new Primera\AtcomResBundle\PrimeraAtcomResBundle(),
             new Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle(),
         ];
 
